@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.filmbox",
+      "predictiveBackGestureEnabled": false
+    },
+    "experiments": {
+      "reactCompiler": false,
+      "typedRoutes": false
+    },
+    "extra": {
+      "eas": {
+        "projectId": "889bc530-e9e7-4d6e-bd7c-dd7399ead964"
+      },
+      "router": {}
+    },
+    "icon": "./assets/images/icon.png",
+    "ios": {
+      "bundleIdentifier": "com.anonymous.filmbox",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "supportsTablet": true
+    },
+    "name": "Film BOX",
+    "orientation": "portrait",
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          },
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain"
+        }
+      ]
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "scheme": "film-box",
+    "slug": "film-box",
+    "updates": {
+      "url": "https://u.expo.dev/889bc530-e9e7-4d6e-bd7c-dd7399ead964"
+    },
+    "userInterfaceStyle": "automatic",
+    "version": "1.0.0",
+    "web": {
+      "favicon": "./assets/images/favicon.png",
+      "output": "static"
+    }
+  }
+}

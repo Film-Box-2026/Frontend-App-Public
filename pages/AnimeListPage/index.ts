@@ -1,0 +1,1 @@
+export { AnimeListPage } from './AnimeListPage';
