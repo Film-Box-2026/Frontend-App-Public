@@ -3,23 +3,24 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { signupMock } from '@/services/api/hooks';
 import { saveHistory, saveRatings, saveResumePoints, saveUser, saveWatchlist } from '@/services/storage/storageService';
 import { useAppDispatch } from '@/store/hooks';
-import { setError, setLoading, setUser } from '@/store/slices/Auth/authSlice';
+import { setError, setLoading, setVerifyEmailData } from '@/store/slices/Auth/authSlice';
 import { setHistory } from '@/store/slices/HistorySlice/historySlice';
 import { setRatings } from '@/store/slices/RatingSlice/ratingSlice';
 import { setResumePoints } from '@/store/slices/ResumeSlice/resumeSlice';
 import { setWatchlist } from '@/store/slices/WatchlistSlice/watchlistSlice';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -54,24 +55,36 @@ export const SignupPage: React.FC = () => {
         confirmPassword,
       });
 
-      // Save user to AsyncStorage
       await saveUser(response.user);
-      // Initialize other data structures
       await saveWatchlist([]);
       await saveHistory([]);
       await saveRatings([]);
       await saveResumePoints({});
 
-      // Update Redux
-      dispatch(setUser(response.user));
+      const verificationCode = Math.floor(Math.random() * 1000000)
+        .toString()
+        .padStart(6, '0')
+        .trim();
+
+      console.log(
+        `Verification code for ${email}: ${verificationCode} (length: ${verificationCode.length})`
+      );
+
+      dispatch(
+        setVerifyEmailData({
+          email: email.trim(),
+          verificationCode,
+          user: response.user,
+        })
+      );
+
       dispatch(setWatchlist([]));
       dispatch(setHistory([]));
       dispatch(setRatings([]));
       dispatch(setResumePoints({}));
       dispatch(setLoading(false));
 
-      // Navigate to home
-      router.replace('/(tabs)');
+      router.replace('/verify-email');
     } catch (err: any) {
       setErrorState(err.message || 'Đăng ký thất bại');
       dispatch(setError(err.message || 'Đăng ký thất bại'));
@@ -89,6 +102,23 @@ export const SignupPage: React.FC = () => {
     container: {
       flex: 1,
       backgroundColor: colors.background,
+    },
+    topActions: {
+      position: 'absolute',
+      top: -30,
+      left: 16,
+      zIndex: 10,
+    },
+    backHomeButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor:
+        colorScheme === 'dark'
+          ? 'rgba(255,255,255,0.12)'
+          : 'rgba(0,0,0,0.08)',
     },
     scrollContent: {
       flexGrow: 1,
@@ -169,6 +199,16 @@ export const SignupPage: React.FC = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
+        <View style={styles.topActions}>
+          <Pressable
+            style={styles.backHomeButton}
+            onPress={() => router.replace('/(tabs)')}
+            disabled={loading}
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.text} />
+          </Pressable>
+        </View>
+
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Text style={styles.title}>Tạo Tài Khoản</Text>
           <Text style={styles.subtitle}>Đăng ký để bắt đầu sử dụng</Text>

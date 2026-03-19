@@ -1,20 +1,36 @@
 import { MovieCard } from '@/components/cards';
 import { LoadingPage } from '@/components/LoadingPage';
 import { MovieActionButtons } from '@/components/MovieActionButtons';
+import { showMovieLimitAlert } from '@/components/ui/VIPUpgradePrompt';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useMovieComments } from '@/hooks/useMovieComments';
 import { useResumeMovie } from '@/hooks/useResumeMovie';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useGetDetailMovie, useGetListMovies } from '@/services/api/hooks';
 import { upsertHistoryItem } from '@/services/storage/storageService';
-import { useAppDispatch } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addToHistory } from '@/store/slices/HistorySlice/historySlice';
+import { checkMovieAccessibility } from '@/utils/subscriptionUtils';
 import { Ionicons } from '@expo/vector-icons';
 import { Image as ExpoImage } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { Alert, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  Alert,
+  Animated,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { VideoPlayerModal } from './components';
+import { createDetailMovieStyles } from './styles';
 
 interface Episode {
   name: string;
@@ -29,9 +45,12 @@ export const DetailMoviePage: React.FC = () => {
   const colors = Colors[colorScheme ?? 'dark'];
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const history = useAppSelector((state) => state.history.items);
   const params = useLocalSearchParams();
   const slug = typeof params.slug === 'string' ? params.slug : params.slug?.[0];
 
+  const { subscription } = useSubscription();
   const { data: detailData, isLoading } = useGetDetailMovie(slug);
   const [selectedServerIndex, setSelectedServerIndex] = useState(0);
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
@@ -39,18 +58,20 @@ export const DetailMoviePage: React.FC = () => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(true);
   const [currentPlaybackTime, setCurrentPlaybackTime] = useState(0);
   const [currentPlaybackDuration, setCurrentPlaybackDuration] = useState(0);
-  const scrollY = new Animated.Value(0);
+  const [commentText, setCommentText] = useState('');
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef<ScrollView | null>(null);
 
   const movieData = detailData?.movie;
   const episodes = detailData?.episodes || [];
-
-  // New hooks for resume, watchlist, and history
   const resumeHook = useResumeMovie({
     movieId: movieData?._id || '',
     slug: movieData?.slug || '',
     episodeIndex: selectedServerIndex,
     totalDuration: currentPlaybackDuration,
   });
+  const { getMovieComments, addComment, canDeleteComment, deleteComment } =
+    useMovieComments();
 
   const getTypeList = (
     type: string | undefined
@@ -96,9 +117,23 @@ export const DetailMoviePage: React.FC = () => {
     [episodes]
   );
 
-  // Handle adding to history
+  const requireAuth = useCallback(() => {
+    if (isAuthenticated) {
+      return true;
+    }
+
+    Alert.alert('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để xem phim hoặc lưu danh sách cá nhân.', [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Đăng nhập',
+        onPress: () => router.push('/login'),
+      },
+    ]);
+
+    return false;
+  }, [isAuthenticated, router]);
   const addMovieToHistory = useCallback(async () => {
-    if (!movieData) return;
+    if (!movieData || !isAuthenticated) return;
     
     const historyItem = {
       movieId: movieData._id,
@@ -111,25 +146,81 @@ export const DetailMoviePage: React.FC = () => {
 
     dispatch(addToHistory(historyItem));
     await upsertHistoryItem(historyItem);
-  }, [movieData, dispatch, currentPlaybackTime]);
+  }, [movieData, dispatch, currentPlaybackTime, isAuthenticated]);
 
-  // Handle play button
+  const canAccessMovieBySubscription = useCallback(() => {
+    const { canWatch } = checkMovieAccessibility(history.length, subscription);
+    if (!canWatch) {
+      showMovieLimitAlert(() => router.push('/subscription'));
+      return false;
+    }
+
+    return true;
+  }, [history.length, subscription, router]);
+
+  const openEpisodePlayer = useCallback(
+    (
+      episode: Episode,
+      options?: {
+        serverIndex?: number;
+        startTime?: number;
+        duration?: number;
+        resetCurrentTime?: boolean;
+      }
+    ) => {
+      addMovieToHistory();
+
+      if (typeof options?.serverIndex === 'number') {
+        setSelectedServerIndex(options.serverIndex);
+      }
+
+      if (options?.resetCurrentTime) {
+        setCurrentPlaybackTime(0);
+      } else if (typeof options?.startTime === 'number') {
+        setCurrentPlaybackTime(options.startTime);
+      }
+
+      if (typeof options?.duration === 'number') {
+        setCurrentPlaybackDuration(options.duration);
+      }
+
+      setSelectedEpisode(episode);
+      setModalVisible(true);
+    },
+    [addMovieToHistory]
+  );
+
   const handlePlayPress = useCallback(() => {
+    if (!requireAuth()) {
+      return;
+    }
+
+    if (!canAccessMovieBySubscription()) {
+      return;
+    }
+
     const firstEpisode = getFirstPlayableEpisode();
     if (!firstEpisode) {
       Alert.alert('Không thể phát', 'Phim này hiện chưa có link phát hợp lệ.');
       return;
     }
 
-    addMovieToHistory();
-    setCurrentPlaybackTime(0);
-    setSelectedServerIndex(0);
-    setSelectedEpisode(firstEpisode);
-    setModalVisible(true);
-  }, [getFirstPlayableEpisode, addMovieToHistory]);
+    openEpisodePlayer(firstEpisode, {
+      serverIndex: 0,
+      resetCurrentTime: true,
+      duration: 0,
+    });
+  }, [requireAuth, canAccessMovieBySubscription, getFirstPlayableEpisode, openEpisodePlayer]);
 
-  // Handle resume button
   const handleResumePress = useCallback(() => {
+    if (!requireAuth()) {
+      return;
+    }
+
+    if (!canAccessMovieBySubscription()) {
+      return;
+    }
+
     const resumeData = resumeHook.getResumeData();
     if (resumeData) {
       const episodeToPlay = getEpisodeByServerIndex(resumeData.episodeIndex);
@@ -138,30 +229,24 @@ export const DetailMoviePage: React.FC = () => {
         return;
       }
 
-      addMovieToHistory();
-      setSelectedServerIndex(
-        resumeData.episodeIndex >= 0 && resumeData.episodeIndex < episodes.length
-          ? resumeData.episodeIndex
-          : 0
-      );
-      setSelectedEpisode(episodeToPlay);
-      setCurrentPlaybackTime(resumeData.currentTime);
-      setCurrentPlaybackDuration(resumeData.totalDuration || 0);
-      setModalVisible(true);
-      Alert.alert('Tiếp tục', `Tiếp tục từ ${Math.floor(resumeData.currentTime / 60)} phút`);
+      openEpisodePlayer(episodeToPlay, {
+        serverIndex:
+          resumeData.episodeIndex >= 0 && resumeData.episodeIndex < episodes.length
+            ? resumeData.episodeIndex
+            : 0,
+        startTime: resumeData.currentTime,
+        duration: resumeData.totalDuration || 0,
+      });
     }
-  }, [resumeHook, episodes.length, addMovieToHistory, getEpisodeByServerIndex]);
-
-  // Cleanup on unmount - save resume point
+  }, [requireAuth, canAccessMovieBySubscription, resumeHook, episodes.length, getEpisodeByServerIndex, openEpisodePlayer]);
   useFocusEffect(
     useCallback(() => {
       return () => {
-        if (movieData && modalVisible) {
-          // Save a final resume point when leaving
+        if (movieData && modalVisible && isAuthenticated) {
           resumeHook.saveResumePoint(currentPlaybackTime);
         }
       };
-    }, [movieData, modalVisible, resumeHook, currentPlaybackTime])
+    }, [movieData, modalVisible, resumeHook, currentPlaybackTime, isAuthenticated])
   );
 
   const handlePlaybackProgress = useCallback(
@@ -169,20 +254,20 @@ export const DetailMoviePage: React.FC = () => {
       setCurrentPlaybackTime(currentTime);
       setCurrentPlaybackDuration(duration);
 
-      if (movieData) {
+      if (movieData && isAuthenticated) {
         resumeHook.saveResumePoint(currentTime);
       }
     },
-    [movieData, resumeHook]
+    [movieData, resumeHook, isAuthenticated]
   );
 
   const handleClosePlayer = useCallback(async () => {
-    if (movieData) {
+    if (movieData && isAuthenticated) {
       await resumeHook.saveResumePoint(currentPlaybackTime);
       await addMovieToHistory();
     }
     setModalVisible(false);
-  }, [movieData, resumeHook, currentPlaybackTime, addMovieToHistory]);
+  }, [movieData, resumeHook, currentPlaybackTime, addMovieToHistory, isAuthenticated]);
 
   const headerBackgroundOpacity = scrollY.interpolate({
     inputRange: [0, 150],
@@ -190,257 +275,18 @@ export const DetailMoviePage: React.FC = () => {
     extrapolate: 'clamp',
   });
 
-  const styles = StyleSheet.create({
-    safeContainer: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    headerBackdrop: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: 60,
-      backgroundColor: 'transparent',
-      zIndex: 10,
-      justifyContent: 'center',
-      paddingHorizontal: 16,
-    },
-    headerContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    backButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    headerTitle: {
-      flex: 1,
-      marginLeft: 12,
-      color: colors.text,
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    shareButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    scrollContent: {
-      paddingTop: 0,
-    },
-    posterSection: {
-      height: 350,
-      backgroundColor: colors.background,
-      overflow: 'hidden',
-    },
-    posterImage: {
-      width: '100%',
-      height: '100%',
-    },
-    infoSection: {
-      paddingHorizontal: 16,
-      paddingVertical: 20,
-      gap: 16,
-    },
-    titleGroup: {
-      gap: 4,
-    },
-    mainTitle: {
-      fontSize: 24,
-      fontWeight: '700',
-      color: colors.text,
-    },
-    originTitle: {
-      fontSize: 14,
-      color: colors.tabIconDefault,
-    },
-    metaInfo: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      flexWrap: 'wrap',
-    },
-    metaItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 16,
-      gap: 4,
-    },
-    metaText: {
-      fontSize: 12,
-      color: colors.text,
-      fontWeight: '600',
-    },
-    ratingSection: {
-      flexDirection: 'row',
-      gap: 12,
-    },
-    ratingCard: {
-      flex: 1,
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-      borderRadius: 12,
-      padding: 12,
-      alignItems: 'center',
-      gap: 4,
-    },
-    ratingSource: {
-      fontSize: 12,
-      color: colors.tabIconDefault,
-    },
-    ratingValue: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: '#FFD700',
-    },
-    actionButtons: {
-      flexDirection: 'row',
-      gap: 12,
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-      padding: 16,
-      borderRadius: 12,
-    },
-    actionButton: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#4A90E2',
-      paddingVertical: 12,
-      borderRadius: 8,
-      gap: 8,
-    },
-    actionButtonSecondary: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      paddingVertical: 12,
-      borderRadius: 8,
-      gap: 8,
-    },
-    buttonText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: colors.text,
-    },
-    descriptionSection: {
-      paddingHorizontal: 16,
-      paddingVertical: 16,
-      gap: 8,
-    },
-    sectionTitle: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: colors.text,
-    },
-    sectionHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    descriptionText: {
-      fontSize: 14,
-      color: colors.tabIconDefault,
-      lineHeight: 20,
-    },
-    seasonsSection: {
-      paddingHorizontal: 16,
-      paddingVertical: 16,
-      gap: 12,
-    },
-    seasonTabs: {
-      flexDirection: 'row',
-      gap: 8,
-      marginBottom: 12,
-    },
-    seasonTab: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    seasonTabActive: {
-      backgroundColor: '#4A90E2',
-    },
-    seasonTabText: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: colors.tabIconDefault,
-    },
-    seasonTabTextActive: {
-      color: '#fff',
-    },
-    episodeList: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 8,
-    },
-    episodeItem: {
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-      borderRadius: 8,
-      width: 56,
-      height: 56,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    episodeItemActive: {
-      backgroundColor: '#4A90E2',
-    },
-    episodeNumber: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: '#4A90E2',
-    },
-    episodeNumberActive: {
-      color: '#fff',
-    },
-    episodeName: {
-      display: 'none',
-    },
-    playIcon: {
-      display: 'none',
-    },
-    relatedMoviesSection: {
-      paddingHorizontal: 16,
-      paddingVertical: 16,
-      gap: 12,
-      paddingBottom: 40,
-    },
-    relatedMoviesGrid: {
-      flexDirection: 'row',
-      gap: 12,
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-    },
-    relatedMovieName: {
-      fontSize: 11,
-      color: colors.text,
-      fontWeight: '600',
-      lineHeight: 14,
-    },
-  });
+  const styles = useMemo(() => createDetailMovieStyles(colors), [colors]);
 
   const handleEpisodePress = (episode: Episode) => {
-      addMovieToHistory();
-    setSelectedEpisode(episode);
-    setModalVisible(true);
+    if (!requireAuth()) {
+      return;
+    }
+
+    if (!canAccessMovieBySubscription()) {
+      return;
+    }
+
+    openEpisodePlayer(episode);
   };
 
   const handleRelatedMoviePress = (movie: any) => {
@@ -453,20 +299,115 @@ export const DetailMoviePage: React.FC = () => {
   const getRelatedMoviesWithFullUrl = (movies: any[]) => {
     return movies.map((movie) => ({
       ...movie,
-      poster_url: `https://phimimg.com/${movie.poster_url}`,
+      poster_url: movie.poster_url?.startsWith('http')
+        ? movie.poster_url
+        : `https://phimimg.com/${movie.poster_url}`,
     }));
+  };
+
+  const movieComments = movieData ? getMovieComments(movieData._id) : [];
+
+  const formatCommentTime = (createdAt: string) => {
+    const createdTime = new Date(createdAt).getTime();
+    const now = Date.now();
+    const diffMs = Math.max(0, now - createdTime);
+    const minuteMs = 60 * 1000;
+    const hourMs = 60 * minuteMs;
+    const dayMs = 24 * hourMs;
+
+    if (diffMs < minuteMs) {
+      return 'Vừa xong';
+    }
+
+    if (diffMs < hourMs) {
+      return `${Math.floor(diffMs / minuteMs)} phút trước`;
+    }
+
+    if (diffMs < dayMs) {
+      return `${Math.floor(diffMs / hourMs)} giờ trước`;
+    }
+
+    return `${Math.floor(diffMs / dayMs)} ngày trước`;
+  };
+
+  const handleSubmitComment = async () => {
+    if (!requireAuth()) {
+      return;
+    }
+
+    if (!movieData) {
+      return;
+    }
+
+    const normalizedComment = commentText.trim();
+    if (!normalizedComment) {
+      Alert.alert('Thiếu nội dung', 'Vui lòng nhập bình luận trước khi gửi.');
+      return;
+    }
+
+    const isSaved = await addComment({
+      movieId: movieData._id,
+      content: normalizedComment,
+    });
+
+    if (isSaved) {
+      setCommentText('');
+      Alert.alert('Thành công', 'Bình luận của bạn đã được gửi.');
+      return;
+    }
+
+    Alert.alert('Lỗi', 'Không thể gửi bình luận lúc này.');
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!movieData) {
+      return;
+    }
+
+    Alert.alert('Xóa bình luận', 'Bạn có chắc muốn xóa bình luận này?', [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Xóa',
+        style: 'destructive',
+        onPress: async () => {
+          const isDeleted = await deleteComment({
+            movieId: movieData._id,
+            commentId,
+          });
+
+          if (!isDeleted) {
+            Alert.alert('Lỗi', 'Không thể xóa bình luận này.');
+          }
+        },
+      },
+    ]);
   };
 
   if (isLoading || !formattedMovieData) {
     return <LoadingPage message="Đang tải chi tiết phim..." />;
   }
 
+  const handleCommentInputFocus = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 300);
+  };
+
+  const handleScrollViewTouchStart = () => {
+    Keyboard.dismiss();
+  };
+
   return (
-    <SafeAreaView
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.safeContainer}
-      edges={['bottom', 'left', 'right']}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <Animated.View
+      <SafeAreaView
+        style={styles.safeContainer}
+        edges={['bottom', 'left', 'right']}
+      >
+        <Animated.View
         style={[
           styles.headerBackdrop,
           {
@@ -489,6 +430,7 @@ export const DetailMoviePage: React.FC = () => {
       </Animated.View>
 
       <Animated.ScrollView
+        ref={scrollViewRef}
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
         scrollEventThrottle={16}
@@ -496,6 +438,7 @@ export const DetailMoviePage: React.FC = () => {
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: false }
         )}
+        onTouchStart={handleScrollViewTouchStart}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.posterSection}>
@@ -683,6 +626,75 @@ export const DetailMoviePage: React.FC = () => {
             )}
           </View>
         </View>
+
+        <View style={styles.commentSection}>
+          <Text style={styles.sectionTitle}>Bình luận</Text>
+
+          {isAuthenticated ? (
+            <View style={styles.commentInputWrapper}>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Viết bình luận của bạn..."
+                placeholderTextColor={colors.tabIconDefault}
+                value={commentText}
+                onChangeText={setCommentText}
+                onFocus={handleCommentInputFocus}
+                multiline
+                maxLength={300}
+              />
+              <View style={styles.commentHeader}>
+                <Text style={styles.commentHint}>
+                  Chia sẻ cảm nhận của bạn về bộ phim này.
+                </Text>
+                <Pressable
+                  style={styles.submitCommentButton}
+                  onPress={handleSubmitComment}
+                >
+                  <Text style={styles.submitCommentText}>Gửi</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <Pressable
+              style={styles.commentInputWrapper}
+              onPress={() => requireAuth()}
+            >
+              <Text style={styles.commentHint}>
+                Đăng nhập để gửi bình luận cho phim này.
+              </Text>
+            </Pressable>
+          )}
+
+          <View style={styles.commentsList}>
+            {movieComments.length > 0 ? (
+              movieComments.map((comment) => (
+                <View key={comment.id} style={styles.commentItem}>
+                  <View style={styles.commentHeader}>
+                    <Text style={styles.commentUserName}>{comment.userName}</Text>
+                    <View style={styles.commentMeta}>
+                      <Text style={styles.commentTime}>
+                        {formatCommentTime(comment.createdAt)}
+                      </Text>
+                      {canDeleteComment(comment) && (
+                        <Pressable
+                          style={styles.deleteCommentButton}
+                          onPress={() => handleDeleteComment(comment.id)}
+                        >
+                          <Text style={styles.deleteCommentText}>Xóa</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  </View>
+                  <Text style={styles.commentContent}>{comment.content}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.commentHint}>
+                Chưa có bình luận nào cho phim này.
+              </Text>
+            )}
+          </View>
+        </View>
       </Animated.ScrollView>
 
       <VideoPlayerModal
@@ -691,6 +703,7 @@ export const DetailMoviePage: React.FC = () => {
         onClose={handleClosePlayer}
         onProgress={handlePlaybackProgress}
       />
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };

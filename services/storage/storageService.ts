@@ -1,5 +1,8 @@
+import { UserSubscription } from '@/constants/subscriptionPlans';
 import { User } from '@/store/slices/Auth/authSlice';
+import { MovieComment } from '@/store/slices/CommentSlice/commentSlice';
 import { HistoryItem } from '@/store/slices/HistorySlice/historySlice';
+import { VIPSubscription } from '@/store/slices/PaymentSlice/paymentSlice';
 import { RatingItem } from '@/store/slices/RatingSlice/ratingSlice';
 import { ResumePoint } from '@/store/slices/ResumeSlice/resumeSlice';
 import { WatchlistItem } from '@/store/slices/WatchlistSlice/watchlistSlice';
@@ -11,6 +14,9 @@ const STORAGE_KEYS = {
   HISTORY: '@film_box_history',
   RATINGS: '@film_box_ratings',
   RESUME_POINTS: '@film_box_resume_points',
+  COMMENTS: '@film_box_comments',
+  NOTIFICATION_READ_IDS: '@film_box_notification_read_ids',
+  SUBSCRIPTION: '@film_box_subscription',
 };
 
 const memoryStorage: Record<string, string> = {};
@@ -60,7 +66,6 @@ const removeRawItem = async (key: string): Promise<void> => {
   delete memoryStorage[key];
 };
 
-// Auth
 export const saveUser = async (user: User): Promise<void> => {
   try {
     await setRawItem(STORAGE_KEYS.USER, JSON.stringify(user));
@@ -87,7 +92,6 @@ export const removeUser = async (): Promise<void> => {
   }
 };
 
-// Watchlist
 export const saveWatchlist = async (watchlist: WatchlistItem[]): Promise<void> => {
   try {
     await setRawItem(STORAGE_KEYS.WATCHLIST, JSON.stringify(watchlist));
@@ -106,7 +110,6 @@ export const getWatchlist = async (): Promise<WatchlistItem[]> => {
   }
 };
 
-// History
 export const saveHistory = async (history: HistoryItem[]): Promise<void> => {
   try {
     await setRawItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
@@ -141,7 +144,6 @@ export const upsertHistoryItem = async (
   }
 };
 
-// Ratings
 export const saveRatings = async (ratings: RatingItem[]): Promise<void> => {
   try {
     await setRawItem(STORAGE_KEYS.RATINGS, JSON.stringify(ratings));
@@ -160,7 +162,6 @@ export const getRatings = async (): Promise<RatingItem[]> => {
   }
 };
 
-// Resume Points
 export const saveResumePoints = async (resumePoints: { [key: string]: ResumePoint }): Promise<void> => {
   try {
     await setRawItem(STORAGE_KEYS.RESUME_POINTS, JSON.stringify(resumePoints));
@@ -179,7 +180,82 @@ export const getResumePoints = async (): Promise<{ [key: string]: ResumePoint }>
   }
 };
 
-// Clear all data
+export const saveComments = async (
+  commentsByMovieId: Record<string, MovieComment[]>
+): Promise<void> => {
+  try {
+    await setRawItem(STORAGE_KEYS.COMMENTS, JSON.stringify(commentsByMovieId));
+  } catch (error) {
+    console.error('Error saving comments:', error);
+  }
+};
+
+export const getComments = async (): Promise<Record<string, MovieComment[]>> => {
+  try {
+    const commentsByMovieId = await getRawItem(STORAGE_KEYS.COMMENTS);
+    return commentsByMovieId ? JSON.parse(commentsByMovieId) : {};
+  } catch (error) {
+    console.error('Error getting comments:', error);
+    return {};
+  }
+};
+
+export const saveNotificationReadIds = async (readIds: string[]): Promise<void> => {
+  try {
+    await setRawItem(STORAGE_KEYS.NOTIFICATION_READ_IDS, JSON.stringify(readIds));
+  } catch (error) {
+    console.error('Error saving notification read IDs:', error);
+  }
+};
+
+export const getNotificationReadIds = async (): Promise<string[]> => {
+  try {
+    const readIds = await getRawItem(STORAGE_KEYS.NOTIFICATION_READ_IDS);
+    return readIds ? JSON.parse(readIds) : [];
+  } catch (error) {
+    console.error('Error getting notification read IDs:', error);
+    return [];
+  }
+};
+
+export const saveSubscription = async (subscription: VIPSubscription): Promise<void> => {
+  try {
+    await setRawItem(STORAGE_KEYS.SUBSCRIPTION, JSON.stringify(subscription));
+  } catch (error) {
+    console.error('Error saving subscription:', error);
+  }
+};
+
+export const getSubscription = async (): Promise<VIPSubscription | null> => {
+  try {
+    const subscription = await getRawItem(STORAGE_KEYS.SUBSCRIPTION);
+    return subscription ? JSON.parse(subscription) : null;
+  } catch (error) {
+    console.error('Error getting subscription:', error);
+    return null;
+  }
+};
+
+export const saveUserSubscription = async (
+  subscription: UserSubscription
+): Promise<void> => {
+  try {
+    await setRawItem(STORAGE_KEYS.SUBSCRIPTION, JSON.stringify(subscription));
+  } catch (error) {
+    console.error('Error saving user subscription:', error);
+  }
+};
+
+export const getUserSubscription = async (): Promise<UserSubscription | null> => {
+  try {
+    const subscription = await getRawItem(STORAGE_KEYS.SUBSCRIPTION);
+    return subscription ? JSON.parse(subscription) : null;
+  } catch (error) {
+    console.error('Error getting user subscription:', error);
+    return null;
+  }
+};
+
 export const clearAllData = async (): Promise<void> => {
   try {
     await Promise.all(Object.values(STORAGE_KEYS).map((key) => removeRawItem(key)));

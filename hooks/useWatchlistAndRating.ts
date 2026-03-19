@@ -31,8 +31,6 @@ export const useWatchlistAndRating = () => {
       };
 
       dispatch(addToWatchlist(item));
-
-      // Persist to AsyncStorage
       const updatedWatchlist = [...watchlist, item];
       await saveWatchlist(updatedWatchlist);
     },
@@ -42,8 +40,6 @@ export const useWatchlistAndRating = () => {
   const removeFromWatchlistHandler = useCallback(
     async (movieId: string) => {
       dispatch(removeFromWatchlist(movieId));
-
-      // Persist to AsyncStorage
       const updatedWatchlist = watchlist.filter((item) => item.movieId !== movieId);
       await saveWatchlist(updatedWatchlist);
     },
@@ -66,7 +62,6 @@ export const useWatchlistAndRating = () => {
 
       dispatch(addOrUpdateRating(item));
 
-      // Persist to AsyncStorage
       const existingIndex = ratings.findIndex((r) => r.movieId === params.movieId);
       let updatedRatings: RatingItem[];
 

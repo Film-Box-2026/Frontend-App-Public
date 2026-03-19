@@ -2,8 +2,11 @@ import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/Auth/authSlice';
 import cartoonReducer from './slices/CartoonPage/cartoonSlice';
 import cinemaReducer from './slices/CinemaPage/cinemaSlice';
+import commentReducer from './slices/CommentSlice/commentSlice';
 import historyReducer from './slices/HistorySlice/historySlice';
 import homeReducer from './slices/HomePage/homeSlice';
+import notificationReducer from './slices/NotificationSlice/notificationSlice';
+import paymentReducer from './slices/PaymentSlice/paymentSlice';
 import ratingReducer from './slices/RatingSlice/ratingSlice';
 import resumeReducer from './slices/ResumeSlice/resumeSlice';
 import seriesReducer from './slices/SeriresSlice/seriesSlice';
@@ -18,12 +21,15 @@ export const store = configureStore({
     home: homeReducer,
     cartoon: cartoonReducer,
     cinema: cinemaReducer,
+    comment: commentReducer,
     series: seriesReducer,
     tvshows: tvshowsReducer,
     watchlist: watchlistReducer,
     history: historyReducer,
     rating: ratingReducer,
     resume: resumeReducer,
+    notification: notificationReducer,
+    payment: paymentReducer,
   },
 });
 

@@ -238,7 +238,6 @@ export const HomePage: React.FC = () => {
                 movies={koreaMovies}
                 gradientColors={['#7B68EE', '#4A90E2', '#FF6B6B']}
                 onMoviePress={(movie) => {
-                  // Handle movie press
                 }}
                 onViewMore={() => {
                   router.push({
@@ -253,7 +252,6 @@ export const HomePage: React.FC = () => {
                 movies={americanMovies}
                 gradientColors={['#FF6B6B', '#FFA500', '#FFD700']}
                 onMoviePress={(movie) => {
-                  // Handle movie press
                 }}
                 onViewMore={() => {
                   router.push({
@@ -268,7 +266,6 @@ export const HomePage: React.FC = () => {
                 movies={vietnamMovies}
                 gradientColors={['#4A90E2', '#00CED1', '#32CD32']}
                 onMoviePress={(movie) => {
-                  // Handle movie press
                 }}
                 onViewMore={() => {
                   router.push({
@@ -290,10 +287,8 @@ export const HomePage: React.FC = () => {
               titleStyle={{ color: colors.text }}
               viewMoreIconColor={colors.text}
               onMoviePress={(movie) => {
-                // Handle movie press
               }}
               onViewMore={() => {
-                // Navigate to all Vietnamese movies
               }}
             />
           </View>

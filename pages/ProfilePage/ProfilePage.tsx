@@ -2,6 +2,7 @@ import { MovieCard } from '@/components/cards';
 import { Header } from '@/components/layout';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useSubscription } from '@/hooks/useSubscription';
 import { clearAllData } from '@/services/storage/storageService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout } from '@/store/slices/Auth/authSlice';
@@ -33,6 +34,7 @@ export const ProfilePage: React.FC = () => {
   const watchlist = useAppSelector((state) => state.watchlist.items);
   const history = useAppSelector((state) => state.history.items);
   const ratings = useAppSelector((state) => state.rating.items);
+  const { subscription, isActive, remainingDays } = useSubscription();
 
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const [loggingOut, setLoggingOut] = useState(false);
@@ -92,6 +94,50 @@ export const ProfilePage: React.FC = () => {
       pathname: '/detail',
       params: { slug: item.slug },
     });
+  };
+
+  const handleDownload = () => {
+    Alert.alert(
+      'Download',
+      'Tính năng download đang được phát triển. Vui lòng quay lại sau!',
+      [{ text: 'OK', style: 'default' }]
+    );
+  };
+
+  const handleAppSettings = () => {
+    Alert.alert(
+      'App Settings',
+      'Tính năng cài đặt ứng dụng đang được phát triển. Vui lòng quay lại sau!',
+      [{ text: 'OK', style: 'default' }]
+    );
+  };
+
+  const handleNotifications = () => {
+    router.push('/notifications');
+  };
+
+  const handleAccount = () => {
+    router.push('/edit-account');
+  };
+
+  const handleHelpSupport = () => {
+    Alert.alert(
+      'Help & Support',
+      'Tính năng hỗ trợ đang được phát triển. Vui lòng quay lại sau!',
+      [{ text: 'OK', style: 'default' }]
+    );
+  };
+
+  const handlePrivacy = () => {
+    Alert.alert(
+      'Privacy',
+      'Tính năng chính sách bảo mật đang được phát triển. Vui lòng quay lại sau!',
+      [{ text: 'OK', style: 'default' }]
+    );
+  };
+
+  const handleUpgradeVIP = () => {
+    router.push('/subscription');
   };
 
   const styles = StyleSheet.create({
@@ -356,6 +402,112 @@ export const ProfilePage: React.FC = () => {
       marginTop: 14,
       marginBottom: 2,
     },
+    settingsSection: {
+      borderRadius: 16,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.08)',
+      backgroundColor:
+        colorScheme === 'dark'
+          ? 'rgba(255,255,255,0.04)'
+          : 'rgba(0,0,0,0.03)',
+      marginVertical: 8,
+    },
+    settingsOptionRow: {
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderBottomWidth: 1,
+      borderBottomColor: 'rgba(255,255,255,0.06)',
+    },
+    settingsOptionRowLast: {
+      borderBottomWidth: 0,
+    },
+    settingsOptionLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      flex: 1,
+    },
+    settingsOptionText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    settingsOptionLogout: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#FF6B6B',
+    },
+    notificationCornerButton: {
+      position: 'absolute',
+      right: 16,
+      top: 14,
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor:
+        colorScheme === 'dark'
+          ? 'rgba(255,255,255,0.08)'
+          : 'rgba(0,0,0,0.08)',
+      zIndex: 20,
+    },
+    notificationBadge: {
+      position: 'absolute',
+      right: 6,
+      top: 6,
+      width: 9,
+      height: 9,
+      borderRadius: 5,
+      backgroundColor: '#FF2D55',
+    },
+    vipCard: {
+      borderRadius: 16,
+      padding: 14,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: 'rgba(255,107,53,0.3)',
+    },
+    vipCardContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    vipLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      flex: 1,
+    },
+    vipInfo: {
+      gap: 4,
+    },
+    vipTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+    },
+    vipSubtitle: {
+      fontSize: 12,
+      fontWeight: '500',
+    },
+    vipButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+    },
+    vipButtonText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: '#FFF',
+    },
   });
 
   if (!user) {
@@ -376,12 +528,21 @@ export const ProfilePage: React.FC = () => {
         showSearchIcon={false}
       />
 
+      <Pressable
+        style={styles.notificationCornerButton}
+        onPress={handleNotifications}
+      >
+        <Ionicons name="notifications-outline" size={21} color={colors.text} />
+        <View style={styles.notificationBadge} />
+      </Pressable>
+
       <FlatList
         data={[0]}
         keyExtractor={() => 'profile-page'}
         showsVerticalScrollIndicator={false}
         renderItem={() => null}
         contentContainerStyle={styles.scrollContent}
+        nestedScrollEnabled={true}
         ListHeaderComponent={
           <>
             <View style={styles.heroCard}>
@@ -476,80 +637,114 @@ export const ProfilePage: React.FC = () => {
 
             {activeTab === 'profile' && (
               <>
-                <View style={styles.sectionCard}>
-                  <Text style={styles.sectionTitle}>Thao tác nhanh</Text>
-                  <View style={styles.quickActionsRow}>
+                <LinearGradient
+                  colors={
+                    subscription.currentPlan === 'basic' && isActive
+                      ? ['#FF6B35', '#F7931E']
+                      : colorScheme === 'dark'
+                        ? ['rgba(255,107,53,0.15)', 'rgba(247,147,30,0.15)']
+                        : ['rgba(255,107,53,0.1)', 'rgba(247,147,30,0.1)']
+                  }
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.vipCard}
+                >
+                  <View style={styles.vipCardContent}>
+                    <View style={styles.vipLeft}>
+                      <Ionicons
+                        name="star"
+                        size={32}
+                        color={subscription.currentPlan === 'basic' && isActive ? '#FFF' : '#FF6B35'}
+                      />
+                      <View style={styles.vipInfo}>
+                        <Text style={[styles.vipTitle, { color: subscription.currentPlan === 'basic' && isActive ? '#FFF' : colors.text }]}>
+                          {subscription.currentPlan === 'basic' && isActive ? 'Gói Cơ Bản Đang Hoạt Động' : 'Nâng Cấp VIP'}
+                        </Text>
+                        <Text style={[styles.vipSubtitle, { color: subscription.currentPlan === 'basic' && isActive ? 'rgba(255,255,255,0.9)' : colors.tabIconDefault }]}>
+                          {subscription.currentPlan === 'basic' && isActive
+                            ? `Gói: basic • ${remainingDays} ngày còn lại`
+                            : 'Hưởng quyền xem 4K, xem offline'}
+                        </Text>
+                      </View>
+                    </View>
                     <Pressable
-                      style={styles.quickAction}
-                      onPress={() => setActiveTab('watchlist')}
+                      style={[
+                        styles.vipButton,
+                        { backgroundColor: subscription.currentPlan === 'basic' && isActive ? 'rgba(0,0,0,0.2)' : '#FF6B35' },
+                      ]}
+                      onPress={handleUpgradeVIP}
                     >
-                      <Ionicons name="bookmark" size={18} color={colors.tint} />
-                      <Text style={styles.quickActionText}>Xem đã lưu</Text>
-                    </Pressable>
-                    <Pressable
-                      style={styles.quickAction}
-                      onPress={() => setActiveTab('history')}
-                    >
-                      <Ionicons name="time" size={18} color={colors.tint} />
-                      <Text style={styles.quickActionText}>Xem gần đây</Text>
-                    </Pressable>
-                    <Pressable
-                      style={styles.quickAction}
-                      onPress={() => router.push('/(tabs)')}
-                    >
-                      <Ionicons name="compass" size={18} color={colors.tint} />
-                      <Text style={styles.quickActionText}>Khám phá</Text>
+                      <Text style={styles.vipButtonText}>
+                        {subscription.currentPlan === 'basic' && isActive ? 'Chi tiết' : 'Nâng cấp'}
+                      </Text>
+                      <Ionicons name="chevron-forward" size={16} color="#FFF" />
                     </Pressable>
                   </View>
-                </View>
+                </LinearGradient>
 
-                <View style={styles.sectionCard}>
-                  <Text style={styles.sectionTitle}>Hoạt động gần đây</Text>
-                  {recentHistory.length > 0 ? (
-                    recentHistory.map((item) => (
-                      <Pressable
-                        key={item.movieId}
-                        style={styles.recentItem}
-                        onPress={() => handleMoviePress(item)}
-                      >
-                        <View style={styles.recentItemLeft}>
-                          <View style={styles.recentBullet}>
-                            <Ionicons
-                              name="play"
-                              size={14}
-                              color={colors.tint}
-                            />
-                          </View>
-                          <Text style={styles.recentTitle} numberOfLines={1}>
-                            {item.name}
-                          </Text>
-                        </View>
-                        <Text style={styles.recentTime}>
-                          {new Date(item.watchedAt).toLocaleDateString('vi-VN')}
-                        </Text>
-                      </Pressable>
-                    ))
-                  ) : (
-                    <View style={[styles.emptyContainer, { minHeight: 140 }]}> 
-                      <Text style={styles.emptyText}>Chưa có hoạt động</Text>
-                      <Text style={styles.emptySubText}>
-                        Hãy bắt đầu xem phim để tạo lịch sử
+                <View style={styles.settingsSection}>
+                  <Pressable style={styles.settingsOptionRow} onPress={handleDownload}>
+                    <View style={styles.settingsOptionLeft}>
+                      <Ionicons name="download" size={20} color={colors.tint} />
+                      <Text style={styles.settingsOptionText}>Download</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.tabIconDefault} />
+                  </Pressable>
+
+                  <Pressable style={styles.settingsOptionRow} onPress={handleAppSettings}>
+                    <View style={styles.settingsOptionLeft}>
+                      <Ionicons name="settings" size={20} color={colors.tint} />
+                      <Text style={styles.settingsOptionText}>App Settings</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.tabIconDefault} />
+                  </Pressable>
+
+                  <Pressable style={styles.settingsOptionRow} onPress={handleNotifications}>
+                    <View style={styles.settingsOptionLeft}>
+                      <Ionicons name="notifications" size={20} color={colors.tint} />
+                      <Text style={styles.settingsOptionText}>Notifications</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.tabIconDefault} />
+                  </Pressable>
+
+                  <Pressable style={styles.settingsOptionRow} onPress={handleAccount}>
+                    <View style={styles.settingsOptionLeft}>
+                      <Ionicons name="person" size={20} color={colors.tint} />
+                      <Text style={styles.settingsOptionText}>Account</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.tabIconDefault} />
+                  </Pressable>
+
+                  <Pressable style={styles.settingsOptionRow} onPress={handleHelpSupport}>
+                    <View style={styles.settingsOptionLeft}>
+                      <Ionicons name="help-circle" size={20} color={colors.tint} />
+                      <Text style={styles.settingsOptionText}>Help & Support</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.tabIconDefault} />
+                  </Pressable>
+
+                  <Pressable style={styles.settingsOptionRow} onPress={handlePrivacy}>
+                    <View style={styles.settingsOptionLeft}>
+                      <Ionicons name="shield" size={20} color={colors.tint} />
+                      <Text style={styles.settingsOptionText}>Privacy</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.tabIconDefault} />
+                  </Pressable>
+
+                  <Pressable
+                    style={[styles.settingsOptionRow, styles.settingsOptionRowLast]}
+                    onPress={handleLogout}
+                    disabled={loggingOut}
+                  >
+                    <View style={styles.settingsOptionLeft}>
+                      <Ionicons name="log-out" size={20} color="#FF6B6B" />
+                      <Text style={styles.settingsOptionLogout}>
+                        {loggingOut ? 'Đang đăng xuất...' : 'Logout'}
                       </Text>
                     </View>
-                  )}
+                    {loggingOut && <ActivityIndicator color="#FF6B6B" size="small" />}
+                  </Pressable>
                 </View>
-
-                <Pressable
-                  style={styles.logoutButton}
-                  onPress={handleLogout}
-                  disabled={loggingOut}
-                >
-                  {loggingOut ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.logoutButtonText}>Đăng Xuất</Text>
-                  )}
-                </Pressable>
               </>
             )}
 
@@ -569,6 +764,7 @@ export const ProfilePage: React.FC = () => {
                       numColumns={2}
                       columnWrapperStyle={{ justifyContent: 'space-between' }}
                       scrollEnabled={false}
+                      nestedScrollEnabled={false}
                     />
                   </View>
                 ) : (
@@ -599,6 +795,7 @@ export const ProfilePage: React.FC = () => {
                       numColumns={2}
                       columnWrapperStyle={{ justifyContent: 'space-between' }}
                       scrollEnabled={false}
+                      nestedScrollEnabled={false}
                     />
                   </View>
                 ) : (

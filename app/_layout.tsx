@@ -1,7 +1,7 @@
 import {
-    DarkTheme,
-    DefaultTheme,
-    ThemeProvider,
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
 } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -13,15 +13,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { RootProvider } from '@/providers/RootProvider';
 import {
-    getHistory,
-    getRatings,
-    getResumePoints,
-    getUser,
-    getWatchlist,
+  getComments,
+  getHistory,
+  getNotificationReadIds,
+  getRatings,
+  getResumePoints,
+  getSubscription,
+  getUser,
+  getWatchlist,
 } from '@/services/storage/storageService';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useAppDispatch } from '@/store/hooks';
 import { setUser } from '@/store/slices/Auth/authSlice';
+import { setComments } from '@/store/slices/CommentSlice/commentSlice';
 import { setHistory } from '@/store/slices/HistorySlice/historySlice';
+import { setReadIds } from '@/store/slices/NotificationSlice/notificationSlice';
+import { setSubscription } from '@/store/slices/PaymentSlice/paymentSlice';
 import { setRatings } from '@/store/slices/RatingSlice/ratingSlice';
 import { setResumePoints } from '@/store/slices/ResumeSlice/resumeSlice';
 import { setWatchlist } from '@/store/slices/WatchlistSlice/watchlistSlice';
@@ -30,18 +36,29 @@ function RootLayoutContent() {
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
-  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Restore auth data from AsyncStorage
     const restoreAuthData = async () => {
       try {
+        const commentsByMovieId = await getComments();
+        if (Object.keys(commentsByMovieId).length > 0) {
+          dispatch(setComments(commentsByMovieId));
+        }
+
+        const notificationReadIds = await getNotificationReadIds();
+        if (notificationReadIds.length > 0) {
+          dispatch(setReadIds(notificationReadIds));
+        }
+
+        const subscription = await getSubscription();
+        if (subscription) {
+          dispatch(setSubscription(subscription));
+        }
+
         const user = await getUser();
         if (user) {
           dispatch(setUser(user));
-
-          // Restore other data
           const watchlist = await getWatchlist();
           const history = await getHistory();
           const ratings = await getRatings();
@@ -63,69 +80,72 @@ function RootLayoutContent() {
   }, [dispatch]);
 
   if (!isReady) {
-    return null; // Show splash screen until data is loaded
+    return null; 
   }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <View style={{ flex: 1, paddingTop: insets.top }}>
-        {isAuthenticated ? (
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen
-              name="(tabs)"
-              options={{}}
-            />
-            <Stack.Screen
-              name="detail"
-              options={{}}
-            />
-            <Stack.Screen
-              name="search"
-              options={{}}
-            />
-            <Stack.Screen
-              name="korea-movies"
-              options={{}}
-            />
-            <Stack.Screen
-              name="america-movies"
-              options={{}}
-            />
-            <Stack.Screen
-              name="vietnam-movies"
-              options={{}}
-            />
-            <Stack.Screen
-              name="anime-list"
-              options={{}}
-            />
-            <Stack.Screen
-              name="genre-movies"
-              options={{}}
-            />
-            <Stack.Screen
-              name="year-movies"
-              options={{}}
-            />
-            <Stack.Screen
-              name="country-movies"
-              options={{}}
-            />
-          </Stack>
-        ) : (
-          <Stack initialRouteName="login" screenOptions={{ headerShown: false }}>
-            <Stack.Screen
-              name="login"
-              options={{}}
-            />
-            <Stack.Screen
-              name="signup"
-              options={{
-                animationEnabled: true,
-              }}
-            />
-          </Stack>
-        )}
+        <Stack initialRouteName="(tabs)" screenOptions={{ headerShown: false }}>
+          <Stack.Screen
+            name="payment"
+            options={{}}
+          />
+          <Stack.Screen
+            name="subscription"
+            options={{}}
+          />
+          <Stack.Screen
+            name="(tabs)"
+            options={{}}
+          />
+          <Stack.Screen
+            name="detail"
+            options={{}}
+          />
+          <Stack.Screen
+            name="search"
+            options={{}}
+          />
+          <Stack.Screen
+            name="korea-movies"
+            options={{}}
+          />
+          <Stack.Screen
+            name="america-movies"
+            options={{}}
+          />
+          <Stack.Screen
+            name="vietnam-movies"
+            options={{}}
+          />
+          <Stack.Screen
+            name="anime-list"
+            options={{}}
+          />
+          <Stack.Screen
+            name="genre-movies"
+            options={{}}
+          />
+          <Stack.Screen
+            name="year-movies"
+            options={{}}
+          />
+          <Stack.Screen
+            name="country-movies"
+            options={{}}
+          />
+          <Stack.Screen
+            name="login"
+            options={{}}
+          />
+          <Stack.Screen
+            name="signup"
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+        </Stack>
       </View>
       <StatusBar style="auto" />
     </ThemeProvider>

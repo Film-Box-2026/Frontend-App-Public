@@ -8,11 +8,18 @@ export interface User {
   createdAt: string;
 }
 
+export interface VerifyEmailData {
+  email: string;
+  verificationCode: string;
+  user: User;
+}
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
+  verifyEmailData: VerifyEmailData | null;
 }
 
 const initialState: AuthState = {
@@ -20,6 +27,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   loading: false,
   error: null,
+  verifyEmailData: null,
 };
 
 const authSlice = createSlice({
@@ -30,11 +38,21 @@ const authSlice = createSlice({
       state.user = action.payload;
       state.isAuthenticated = true;
       state.error = null;
+      state.verifyEmailData = null;
+    },
+    updateUserInfo: (state, action: PayloadAction<Partial<User>>) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+      }
+    },
+    setVerifyEmailData: (state, action: PayloadAction<VerifyEmailData>) => {
+      state.verifyEmailData = action.payload;
     },
     logout: (state) => {
       state.user = null;
       state.isAuthenticated = false;
       state.error = null;
+      state.verifyEmailData = null;
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
@@ -45,5 +63,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setUser, logout, setLoading, setError } = authSlice.actions;
+export const { setUser, updateUserInfo, setVerifyEmailData, logout, setLoading, setError } = authSlice.actions;
 export default authSlice.reducer;

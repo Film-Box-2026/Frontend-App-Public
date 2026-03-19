@@ -30,8 +30,6 @@ export const AnimeListPage: React.FC = () => {
   } = useGetCartoonMovies({
     page,
   });
-
-  // Accumulate movies from different pages
   useEffect(() => {
     if (animeMovies && animeMovies.length > 0) {
       if (page === 1) {
@@ -82,9 +80,7 @@ export const AnimeListPage: React.FC = () => {
         title="Anime"
         showBackIcon={true}
         onBackPress={() => router.back()}
-        onSearchPress={() => {
-          // Handle search
-        }}
+        onSearchPress={() => {}}
         showSearchIcon={false}
       />
       <FlatList

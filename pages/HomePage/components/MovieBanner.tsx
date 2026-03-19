@@ -157,9 +157,7 @@ export const MovieBanner: React.FC<MovieBannerProps> = ({
         height={400}
         data={movies}
         renderItem={renderItem}
-        onSnapToItem={(index) => {
-          // ignore
-        }}
+        onSnapToItem={() => {}}
         autoPlay
         autoPlayInterval={3000}
         scrollAnimationDuration={600}

@@ -8,17 +8,18 @@ import { setHistory } from '@/store/slices/HistorySlice/historySlice';
 import { setRatings } from '@/store/slices/RatingSlice/ratingSlice';
 import { setResumePoints } from '@/store/slices/ResumeSlice/resumeSlice';
 import { setWatchlist } from '@/store/slices/WatchlistSlice/watchlistSlice';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -28,7 +29,7 @@ export const LoginPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const [email, setEmail] = useState('user@example.com');
+  const [email, setEmail] = useState('phamdo@dev.com');
   const [password, setPassword] = useState('123456');
   const [loading, setLoadingState] = useState(false);
   const [error, setErrorState] = useState('');
@@ -46,15 +47,12 @@ export const LoginPage: React.FC = () => {
     try {
       const response = await loginMock({ email, password });
 
-      // Save user to AsyncStorage
       await saveUser(response.user);
-      // Initialize other data structures
       await saveWatchlist([]);
       await saveHistory([]);
       await saveRatings([]);
       await saveResumePoints({});
 
-      // Update Redux
       dispatch(setUser(response.user));
       dispatch(setWatchlist([]));
       dispatch(setHistory([]));
@@ -62,7 +60,6 @@ export const LoginPage: React.FC = () => {
       dispatch(setResumePoints({}));
       dispatch(setLoading(false));
 
-      // Navigate to home
       router.replace('/(tabs)');
     } catch (err: any) {
       setErrorState(err.message || 'Đăng nhập thất bại');
@@ -86,6 +83,23 @@ export const LoginPage: React.FC = () => {
       flex: 1,
       paddingHorizontal: 24,
       justifyContent: 'center',
+    },
+    topActions: {
+      position: 'absolute',
+      top: -30,
+      left: 16,
+      zIndex: 10,
+    },
+    backHomeButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor:
+        colorScheme === 'dark'
+          ? 'rgba(255,255,255,0.12)'
+          : 'rgba(0,0,0,0.08)',
     },
     title: {
       fontSize: 32,
@@ -177,13 +191,23 @@ export const LoginPage: React.FC = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
+        <View style={styles.topActions}>
+          <Pressable
+            style={styles.backHomeButton}
+            onPress={() => router.replace('/(tabs)')}
+            disabled={loading}
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.text} />
+          </Pressable>
+        </View>
+
         <View style={styles.content}>
           <Text style={styles.title}>Film BOX</Text>
           <Text style={styles.subtitle}>Đăng nhập để tiếp tục</Text>
 
           <View style={styles.demoInfo}>
             <Text style={[styles.demoInfoText, styles.demoInfoTitle]}>Demo Account:</Text>
-            <Text style={styles.demoInfoText}>Email: user@example.com</Text>
+            <Text style={styles.demoInfoText}>Email: phamdo@dev.com</Text>
             <Text style={styles.demoInfoText}>Password: 123456</Text>
           </View>
 

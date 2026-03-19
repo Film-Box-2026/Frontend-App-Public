@@ -126,7 +126,12 @@ export const CartoonMovieCard: React.FC<CartoonMovieCardProps> = ({
               </View>
             )}
             {movie.episode_current && (
-              <View style={styles.badge}>
+              <View
+                style={[
+                  styles.badge,
+                  { backgroundColor: 'rgba(74, 144, 226, 0.8)' },
+                ]}
+              >
                 <Text style={styles.badgeText}>{movie.episode_current}</Text>
               </View>
             )}

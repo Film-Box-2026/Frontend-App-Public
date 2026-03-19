@@ -6,11 +6,11 @@ import { CartoonMovieCard } from '@/pages/CartoonPage/components';
 import { useGetListMovies } from '@/services/api/hooks';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  View,
+    ActivityIndicator,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -33,7 +33,6 @@ export const SeriesPage: React.FC = () => {
     sort_type: 'desc',
   });
 
-  // Accumulate movies from different pages
   useEffect(() => {
     if (seriesMovies && seriesMovies.length > 0) {
       if (page === 1) {
@@ -91,9 +90,7 @@ export const SeriesPage: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Header
         title="Phim Bộ"
-        onSearchPress={() => {
-          // Handle search
-        }}
+        onSearchPress={() => {}}
         showSearchIcon={false}
       />
       <FlatList

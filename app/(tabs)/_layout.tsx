@@ -2,7 +2,6 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import React from 'react';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -28,7 +27,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
           tabBarLabel: 'Home',
@@ -39,7 +38,7 @@ export default function TabLayout() {
         name="series"
         options={{
           title: 'Series',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
             <Ionicons name="play-circle" size={size} color={color} />
           ),
           tabBarLabel: 'Series',
@@ -50,7 +49,7 @@ export default function TabLayout() {
         name="tvshows"
         options={{
           title: 'TV Shows',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
             <Ionicons name="tv" size={size} color={color} />
           ),
           tabBarLabel: 'TV Shows',
@@ -61,7 +60,7 @@ export default function TabLayout() {
         name="cartoon"
         options={{
           title: 'Cartoon',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
             <Ionicons name="color-palette" size={size} color={color} />
           ),
           tabBarLabel: 'Cartoon',
@@ -72,7 +71,7 @@ export default function TabLayout() {
         name="cinema"
         options={{
           title: 'Cinema',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
             <Ionicons name="film" size={size} color={color} />
           ),
           tabBarLabel: 'Cinema',
@@ -83,7 +82,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
             <Ionicons name="person" size={size} color={color} />
           ),
           tabBarLabel: 'Profile',

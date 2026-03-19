@@ -22,10 +22,8 @@ const historySlice = createSlice({
   initialState,
   reducers: {
     addToHistory: (state, action: PayloadAction<HistoryItem>) => {
-      // Remove if exists, add to top
       state.items = state.items.filter((item) => item.movieId !== action.payload.movieId);
       state.items.unshift(action.payload);
-      // Keep only last 50 items
       if (state.items.length > 50) {
         state.items = state.items.slice(0, 50);
       }

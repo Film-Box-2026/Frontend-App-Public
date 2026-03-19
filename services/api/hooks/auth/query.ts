@@ -1,14 +1,13 @@
 import { User } from '@/store/slices/Auth/authSlice';
 import { AuthResponse, LoginParams, SignupParams } from './types';
 
-// Mock user database
 const mockUsers: { [email: string]: { password: string; user: User } } = {
-  'user@example.com': {
+  'phamdo@dev.com': {
     password: '123456',
     user: {
       id: '1',
-      name: 'Nguyễn Văn A',
-      email: 'user@example.com',
+      name: 'Phạm Đô',
+      email: 'phamdo@dev.com',
       avatar: 'https://i.pravatar.cc/100?img=1',
       createdAt: new Date().toISOString(),
     },

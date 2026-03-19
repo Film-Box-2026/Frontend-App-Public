@@ -2,7 +2,9 @@ import { RatingComponent } from '@/components/ui/RatingComponent';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useWatchlistAndRating } from '@/hooks/useWatchlistAndRating';
+import { useAppSelector } from '@/store/hooks';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -27,6 +29,8 @@ export const MovieActionButtons: React.FC<MovieActionButtonsProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const router = useRouter();
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const { addToWatchlistHandler, removeFromWatchlistHandler, isInWatchlist, rateMovie, getMovieRating } =
     useWatchlistAndRating();
 
@@ -43,7 +47,30 @@ export const MovieActionButtons: React.FC<MovieActionButtonsProps> = ({
     setMovieRating(rating?.rating || 0);
   }, [movieId, getMovieRating]);
 
+  const promptLogin = () => {
+    Alert.alert('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để sử dụng tính năng này.', [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Đăng nhập',
+        onPress: () => router.push('/login'),
+      },
+    ]);
+  };
+
+  const canRunProtectedAction = () => {
+    if (isAuthenticated) {
+      return true;
+    }
+
+    promptLogin();
+    return false;
+  };
+
   const handleToggleWatchlist = async () => {
+    if (!canRunProtectedAction()) {
+      return;
+    }
+
     try {
       if (isInList) {
         await removeFromWatchlistHandler(movieId);
@@ -65,6 +92,10 @@ export const MovieActionButtons: React.FC<MovieActionButtonsProps> = ({
   };
 
   const handleRatingChange = async (rating: number) => {
+    if (!canRunProtectedAction()) {
+      return;
+    }
+
     try {
       await rateMovie({
         movieId,
@@ -154,17 +185,41 @@ export const MovieActionButtons: React.FC<MovieActionButtonsProps> = ({
       <View style={styles.primaryButtonsRow}>
         {hasResumeData && onResumePress ? (
           <>
-            <Pressable style={styles.playButton} onPress={onPlayPress}>
+            <Pressable
+              style={styles.playButton}
+              onPress={() => {
+                if (!canRunProtectedAction()) {
+                  return;
+                }
+                onPlayPress();
+              }}
+            >
               <Ionicons name="play" size={18} color="#fff" />
               <Text style={styles.buttonText}>Xem từ đầu</Text>
             </Pressable>
-            <Pressable style={styles.resumeButton} onPress={onResumePress}>
+            <Pressable
+              style={styles.resumeButton}
+              onPress={() => {
+                if (!canRunProtectedAction()) {
+                  return;
+                }
+                onResumePress();
+              }}
+            >
               <Ionicons name="play-skip-back" size={18} color="#fff" />
               <Text style={styles.buttonText}>Tiếp tục</Text>
             </Pressable>
           </>
         ) : (
-          <Pressable style={styles.playButton} onPress={onPlayPress}>
+          <Pressable
+            style={styles.playButton}
+            onPress={() => {
+              if (!canRunProtectedAction()) {
+                return;
+              }
+              onPlayPress();
+            }}
+          >
             <Ionicons name="play" size={18} color="#fff" />
             <Text style={styles.buttonText}>Xem ngay</Text>
           </Pressable>

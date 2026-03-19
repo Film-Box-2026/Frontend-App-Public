@@ -33,7 +33,7 @@ export const TVShowsPage: React.FC = () => {
     sort_type: 'desc',
   });
 
-  // Accumulate movies from different pages
+
   useEffect(() => {
     if (tvshowMovies && tvshowMovies.length > 0) {
       if (page === 1) {
@@ -91,9 +91,7 @@ export const TVShowsPage: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Header
         title="TV Shows"
-        onSearchPress={() => {
-          // Handle search
-        }}
+        onSearchPress={() => {}}
         showSearchIcon={false}
       />
       <FlatList

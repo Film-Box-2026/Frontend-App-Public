@@ -1,0 +1,1 @@
+export { EditAccountPage } from './EditAccountPage';
