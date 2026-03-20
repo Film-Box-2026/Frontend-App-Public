@@ -33,7 +33,6 @@ export const CinemaPage: React.FC = () => {
     sort_type: 'desc',
   });
 
-  // Accumulate movies from different pages
   useEffect(() => {
     if (cinemaMovies && cinemaMovies.length > 0) {
       if (page === 1) {
@@ -92,7 +91,6 @@ export const CinemaPage: React.FC = () => {
       <Header
         title="Phim Lẻ"
         onSearchPress={() => {
-          // Handle search
         }}
         showSearchIcon={false}
       />
