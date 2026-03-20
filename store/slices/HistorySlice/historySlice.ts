@@ -6,12 +6,30 @@ export interface HistoryItem {
   name: string;
   posterUrl: string;
   watchedAt: string;
-  duration: number; // seconds watched in this session
+  duration: number;
+  lastServerIndex?: number;
+  lastEpisodeIndex?: number;
+  lastEpisodeSlug?: string;
 }
 
 interface HistoryState {
   items: HistoryItem[];
 }
+
+const getHistoryIdentity = (item: HistoryItem): string => {
+  if (item.lastEpisodeSlug) {
+    return `${item.movieId}:${item.lastEpisodeSlug}`;
+  }
+
+  if (
+    typeof item.lastServerIndex === 'number' &&
+    typeof item.lastEpisodeIndex === 'number'
+  ) {
+    return `${item.movieId}:${item.lastServerIndex}:${item.lastEpisodeIndex}`;
+  }
+
+  return item.movieId;
+};
 
 const initialState: HistoryState = {
   items: [],
@@ -22,7 +40,10 @@ const historySlice = createSlice({
   initialState,
   reducers: {
     addToHistory: (state, action: PayloadAction<HistoryItem>) => {
-      state.items = state.items.filter((item) => item.movieId !== action.payload.movieId);
+      const targetIdentity = getHistoryIdentity(action.payload);
+      state.items = state.items.filter(
+        (item) => getHistoryIdentity(item) !== targetIdentity
+      );
       state.items.unshift(action.payload);
       if (state.items.length > 50) {
         state.items = state.items.slice(0, 50);

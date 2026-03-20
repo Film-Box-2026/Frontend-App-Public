@@ -1,21 +1,25 @@
 import { saveResumePoints } from '@/services/storage/storageService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { ResumePoint, setResumePoint } from '@/store/slices/ResumeSlice/resumeSlice';
+import { removeResumePoint, ResumePoint, setResumePoint } from '@/store/slices/ResumeSlice/resumeSlice';
 import { useCallback, useEffect, useRef } from 'react';
 
 interface UseResumeMovieProps {
   movieId: string;
   slug: string;
+  serverIndex: number;
   episodeIndex: number;
+  episodeSlug?: string;
   totalDuration: number;
 }
 
-const SAVE_INTERVAL = 5000; // Save every 5 seconds
+const SAVE_INTERVAL = 5000; 
 
 export const useResumeMovie = ({
   movieId,
   slug,
+  serverIndex,
   episodeIndex,
+  episodeSlug,
   totalDuration,
 }: UseResumeMovieProps) => {
   const dispatch = useAppDispatch();
@@ -26,8 +30,6 @@ export const useResumeMovie = ({
   const saveResumePoint = useCallback(
     async (currentTime: number) => {
       const now = Date.now();
-
-      // Only save if at least SAVE_INTERVAL ms has passed since last save
       if (now - lastSaveTimeRef.current < SAVE_INTERVAL) {
         return;
       }
@@ -37,22 +39,22 @@ export const useResumeMovie = ({
       const resumePoint: ResumePoint = {
         movieId,
         slug,
+        serverIndex,
         episodeIndex,
+        episodeSlug,
         currentTime,
         totalDuration,
         updatedAt: new Date().toISOString(),
       };
 
       dispatch(setResumePoint(resumePoint));
-
-      // Persist to AsyncStorage
       const updatedPoints = {
         ...(resumePoints || {}),
         [movieId]: resumePoint,
       };
       await saveResumePoints(updatedPoints);
     },
-    [movieId, slug, episodeIndex, totalDuration, dispatch, resumePoints]
+    [movieId, slug, serverIndex, episodeIndex, episodeSlug, totalDuration, dispatch, resumePoints]
   );
 
   const getResumeData = useCallback(() => {
@@ -63,8 +65,9 @@ export const useResumeMovie = ({
   const clearResumePoint = useCallback(async () => {
     const updatedPoints = { ...(resumePoints || {}) };
     delete updatedPoints[movieId];
+    dispatch(removeResumePoint(movieId));
     await saveResumePoints(updatedPoints);
-  }, [movieId, resumePoints]);
+  }, [movieId, dispatch, resumePoints]);
 
   useEffect(() => {
     return () => {

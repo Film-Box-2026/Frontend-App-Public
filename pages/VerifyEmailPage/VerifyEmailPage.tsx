@@ -6,13 +6,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -254,18 +254,18 @@ export const VerifyEmailPage: React.FC = () => {
       marginBottom: 20,
       alignSelf: 'flex-start',
     },
-    debugCodeContainer: {
-      marginTop: 20,
-      padding: 12,
-      borderRadius: 10,
-      backgroundColor: 'rgba(255, 193, 7, 0.1)',
-      borderWidth: 1,
-      borderColor: 'rgba(255, 193, 7, 0.3)',
-    },
+    // debugCodeContainer: {
+    //   marginTop: 20,
+    //   padding: 12,
+    //   borderRadius: 10,
+    //   backgroundColor: 'rgba(255, 193, 7, 0.1)',
+    //   borderWidth: 1,
+    //   borderColor: 'rgba(255, 193, 7, 0.3)',
+    // },
     debugCodeLabel: {
       fontSize: 11,
       fontWeight: '600',
-      color: '#FFC107',
+      color: '#4fe60a',
       marginBottom: 4,
     },
     debugCode: {
@@ -350,7 +350,7 @@ export const VerifyEmailPage: React.FC = () => {
 
         {verifyEmailData?.verificationCode && (
           <View style={styles.debugCodeContainer}>
-            <Text style={styles.debugCodeLabel}>🔍 Mã xác minh (Testing):</Text>
+            <Text style={styles.debugCodeLabel}> Mã xác minh (Testing):</Text>
             <Text style={styles.debugCode}>{verifyEmailData.verificationCode}</Text>
           </View>
         )}

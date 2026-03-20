@@ -3,9 +3,11 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 export interface ResumePoint {
   movieId: string;
   slug: string;
+  serverIndex: number;
   episodeIndex: number;
-  currentTime: number; // seconds
-  totalDuration: number; // seconds
+  episodeSlug?: string;
+  currentTime: number;
+  totalDuration: number;
   updatedAt: string;
 }
 
