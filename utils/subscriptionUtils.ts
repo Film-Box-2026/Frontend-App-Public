@@ -1,13 +1,8 @@
 import { MOVIE_LIMIT_CONFIG, UserSubscription } from '@/constants/subscriptionPlans';
 
-/**
- * Kiểm tra có thể xem phim theo index hay không
- * @param movieIndex - Index phim (0-based)
- * @param subscription - User subscription
- * @returns { canWatch: boolean, remainingMovies: number }
- */
+
 export const checkMovieAccessibility = (
-  movieIndex: number,
+  watchedEpisodeCount: number,
   subscription: UserSubscription | null
 ): { canWatch: boolean; remainingMovies: number } => {
   if (!subscription) {
@@ -21,24 +16,20 @@ export const checkMovieAccessibility = (
     return { canWatch: true, remainingMovies: -1 };
   }
 
-  // Free plan: giới hạn số phim
-  const canWatch = movieIndex < limit;
-  const remainingMovies = Math.max(0, limit - movieIndex - 1);
+  // Free plan: giới hạn số tập đã xem
+  const canWatch = watchedEpisodeCount < limit;
+  const remainingMovies = Math.max(0, limit - watchedEpisodeCount - 1);
 
   return { canWatch, remainingMovies };
 };
 
-/**
- * Lấy số phim tối đa có thể xem
- */
+
 export const getMovieLimitByPlan = (planId: string): number | null => {
   const limit = MOVIE_LIMIT_CONFIG[planId as keyof typeof MOVIE_LIMIT_CONFIG];
   return limit ?? 0;
 };
 
-/**
- * Kiểm tra phim nào cần upgrade để xem
- */
+
 export const filterMoviesBySubscription = (
   movies: any[],
   subscription: UserSubscription | null

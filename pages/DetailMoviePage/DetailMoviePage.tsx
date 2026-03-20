@@ -17,16 +17,16 @@ import { Image as ExpoImage } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
-  Animated,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    Alert,
+    Animated,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { VideoPlayerModal } from './components';
@@ -53,6 +53,7 @@ export const DetailMoviePage: React.FC = () => {
   const { subscription } = useSubscription();
   const { data: detailData, isLoading } = useGetDetailMovie(slug);
   const [selectedServerIndex, setSelectedServerIndex] = useState(0);
+  const [selectedEpisodeIndex, setSelectedEpisodeIndex] = useState(0);
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(true);
@@ -67,7 +68,9 @@ export const DetailMoviePage: React.FC = () => {
   const resumeHook = useResumeMovie({
     movieId: movieData?._id || '',
     slug: movieData?.slug || '',
-    episodeIndex: selectedServerIndex,
+    serverIndex: selectedServerIndex,
+    episodeIndex: selectedEpisodeIndex,
+    episodeSlug: selectedEpisode?.slug,
     totalDuration: currentPlaybackDuration,
   });
   const { getMovieComments, addComment, canDeleteComment, deleteComment } =
@@ -106,13 +109,34 @@ export const DetailMoviePage: React.FC = () => {
     return firstServer.server_data[0] as Episode;
   }, [episodes]);
 
-  const getEpisodeByServerIndex = useCallback(
-    (serverIndex: number): Episode | null => {
-      const safeIndex =
+  const getEpisodeByIndexes = useCallback(
+    (serverIndex: number, episodeIndex: number): Episode | null => {
+      const safeServerIndex =
         serverIndex >= 0 && serverIndex < episodes.length ? serverIndex : 0;
-      const server = episodes[safeIndex];
-      if (!server?.server_data?.length) return null;
-      return server.server_data[0] as Episode;
+      const serverEpisodes = episodes[safeServerIndex]?.server_data;
+      if (!serverEpisodes?.length) return null;
+
+      const safeEpisodeIndex =
+        episodeIndex >= 0 && episodeIndex < serverEpisodes.length ? episodeIndex : 0;
+
+      return serverEpisodes[safeEpisodeIndex] as Episode;
+    },
+    [episodes]
+  );
+
+  const findEpisodePositionBySlug = useCallback(
+    (episodeSlug?: string) => {
+      if (!episodeSlug) return null;
+
+      for (let serverIndex = 0; serverIndex < episodes.length; serverIndex += 1) {
+        const serverEpisodes = episodes[serverIndex]?.server_data || [];
+        const episodeIndex = serverEpisodes.findIndex((ep: Episode) => ep.slug === episodeSlug);
+        if (episodeIndex !== -1) {
+          return { serverIndex, episodeIndex };
+        }
+      }
+
+      return null;
     },
     [episodes]
   );
@@ -132,21 +156,36 @@ export const DetailMoviePage: React.FC = () => {
 
     return false;
   }, [isAuthenticated, router]);
-  const addMovieToHistory = useCallback(async () => {
+  const addMovieToHistory = useCallback(async (
+    options?: {
+      episode?: Episode | null;
+      serverIndex?: number;
+      episodeIndex?: number;
+      duration?: number;
+    }
+  ) => {
     if (!movieData || !isAuthenticated) return;
     
+    const resolvedServerIndex =
+      typeof options?.serverIndex === 'number' ? options.serverIndex : selectedServerIndex;
+    const resolvedEpisodeIndex =
+      typeof options?.episodeIndex === 'number' ? options.episodeIndex : selectedEpisodeIndex;
+
     const historyItem = {
       movieId: movieData._id,
       slug: movieData.slug,
       name: movieData.name,
       posterUrl: movieData.poster_url,
       watchedAt: new Date().toISOString(),
-      duration: currentPlaybackTime,
+      duration: typeof options?.duration === 'number' ? options.duration : currentPlaybackTime,
+      lastServerIndex: resolvedServerIndex,
+      lastEpisodeIndex: resolvedEpisodeIndex,
+      lastEpisodeSlug: options?.episode?.slug || selectedEpisode?.slug,
     };
 
     dispatch(addToHistory(historyItem));
     await upsertHistoryItem(historyItem);
-  }, [movieData, dispatch, currentPlaybackTime, isAuthenticated]);
+  }, [movieData, dispatch, currentPlaybackTime, isAuthenticated, selectedServerIndex, selectedEpisodeIndex, selectedEpisode]);
 
   const canAccessMovieBySubscription = useCallback(() => {
     const { canWatch } = checkMovieAccessibility(history.length, subscription);
@@ -163,16 +202,25 @@ export const DetailMoviePage: React.FC = () => {
       episode: Episode,
       options?: {
         serverIndex?: number;
+        episodeIndex?: number;
         startTime?: number;
         duration?: number;
         resetCurrentTime?: boolean;
       }
     ) => {
-      addMovieToHistory();
+      const resolvedServerIndex = typeof options?.serverIndex === 'number' ? options.serverIndex : selectedServerIndex;
+      const resolvedEpisodeIndex = typeof options?.episodeIndex === 'number' ? options.episodeIndex : selectedEpisodeIndex;
 
-      if (typeof options?.serverIndex === 'number') {
-        setSelectedServerIndex(options.serverIndex);
-      }
+      setSelectedServerIndex(resolvedServerIndex);
+      setSelectedEpisodeIndex(resolvedEpisodeIndex);
+      setSelectedEpisode(episode);
+
+      addMovieToHistory({
+        episode,
+        serverIndex: resolvedServerIndex,
+        episodeIndex: resolvedEpisodeIndex,
+        duration: typeof options?.startTime === 'number' ? options.startTime : 0,
+      });
 
       if (options?.resetCurrentTime) {
         setCurrentPlaybackTime(0);
@@ -184,10 +232,9 @@ export const DetailMoviePage: React.FC = () => {
         setCurrentPlaybackDuration(options.duration);
       }
 
-      setSelectedEpisode(episode);
       setModalVisible(true);
     },
-    [addMovieToHistory]
+    [addMovieToHistory, selectedServerIndex, selectedEpisodeIndex]
   );
 
   const handlePlayPress = useCallback(() => {
@@ -207,6 +254,7 @@ export const DetailMoviePage: React.FC = () => {
 
     openEpisodePlayer(firstEpisode, {
       serverIndex: 0,
+      episodeIndex: 0,
       resetCurrentTime: true,
       duration: 0,
     });
@@ -223,22 +271,29 @@ export const DetailMoviePage: React.FC = () => {
 
     const resumeData = resumeHook.getResumeData();
     if (resumeData) {
-      const episodeToPlay = getEpisodeByServerIndex(resumeData.episodeIndex);
+      const matchedBySlug = findEpisodePositionBySlug(resumeData.episodeSlug);
+      const fallbackServerIndex =
+        resumeData.serverIndex >= 0 && resumeData.serverIndex < episodes.length
+          ? resumeData.serverIndex
+          : 0;
+
+      const serverIndexToPlay = matchedBySlug?.serverIndex ?? fallbackServerIndex;
+      const episodeIndexToPlay = matchedBySlug?.episodeIndex ?? resumeData.episodeIndex;
+      const episodeToPlay = getEpisodeByIndexes(serverIndexToPlay, episodeIndexToPlay);
+
       if (!episodeToPlay) {
         Alert.alert('Không thể phát', 'Không tìm thấy tập phim để tiếp tục.');
         return;
       }
 
       openEpisodePlayer(episodeToPlay, {
-        serverIndex:
-          resumeData.episodeIndex >= 0 && resumeData.episodeIndex < episodes.length
-            ? resumeData.episodeIndex
-            : 0,
+        serverIndex: serverIndexToPlay,
+        episodeIndex: episodeIndexToPlay,
         startTime: resumeData.currentTime,
         duration: resumeData.totalDuration || 0,
       });
     }
-  }, [requireAuth, canAccessMovieBySubscription, resumeHook, episodes.length, getEpisodeByServerIndex, openEpisodePlayer]);
+  }, [requireAuth, canAccessMovieBySubscription, resumeHook, episodes.length, findEpisodePositionBySlug, getEpisodeByIndexes, openEpisodePlayer]);
   useFocusEffect(
     useCallback(() => {
       return () => {
@@ -264,10 +319,15 @@ export const DetailMoviePage: React.FC = () => {
   const handleClosePlayer = useCallback(async () => {
     if (movieData && isAuthenticated) {
       await resumeHook.saveResumePoint(currentPlaybackTime);
-      await addMovieToHistory();
+      await addMovieToHistory({
+        episode: selectedEpisode,
+        serverIndex: selectedServerIndex,
+        episodeIndex: selectedEpisodeIndex,
+        duration: currentPlaybackTime,
+      });
     }
     setModalVisible(false);
-  }, [movieData, resumeHook, currentPlaybackTime, addMovieToHistory, isAuthenticated]);
+  }, [movieData, resumeHook, currentPlaybackTime, addMovieToHistory, isAuthenticated, selectedEpisode, selectedServerIndex, selectedEpisodeIndex]);
 
   const headerBackgroundOpacity = scrollY.interpolate({
     inputRange: [0, 150],
@@ -277,7 +337,7 @@ export const DetailMoviePage: React.FC = () => {
 
   const styles = useMemo(() => createDetailMovieStyles(colors), [colors]);
 
-  const handleEpisodePress = (episode: Episode) => {
+  const handleEpisodePress = (episode: Episode, episodeIndex: number) => {
     if (!requireAuth()) {
       return;
     }
@@ -286,7 +346,12 @@ export const DetailMoviePage: React.FC = () => {
       return;
     }
 
-    openEpisodePlayer(episode);
+    openEpisodePlayer(episode, {
+      serverIndex: selectedServerIndex,
+      episodeIndex,
+      resetCurrentTime: true,
+      duration: 0,
+    });
   };
 
   const handleRelatedMoviePress = (movie: any) => {
@@ -536,7 +601,8 @@ export const DetailMoviePage: React.FC = () => {
                     ]}
                     onPress={() =>
                       handleEpisodePress(
-                        episodes[selectedServerIndex]?.server_data[0]
+                        episodes[selectedServerIndex]?.server_data[0],
+                        0
                       )
                     }
                   >
@@ -590,7 +656,7 @@ export const DetailMoviePage: React.FC = () => {
                           selectedEpisode?.slug === episode.slug &&
                             styles.episodeItemActive,
                         ]}
-                        onPress={() => handleEpisodePress(episode)}
+                        onPress={() => handleEpisodePress(episode, index)}
                       >
                         <Text
                           style={[

@@ -132,8 +132,24 @@ export const upsertHistoryItem = async (
   item: HistoryItem
 ): Promise<HistoryItem[]> => {
   try {
+    const getHistoryIdentity = (historyItem: HistoryItem): string => {
+      if (historyItem.lastEpisodeSlug) {
+        return `${historyItem.movieId}:${historyItem.lastEpisodeSlug}`;
+      }
+
+      if (
+        typeof historyItem.lastServerIndex === 'number' &&
+        typeof historyItem.lastEpisodeIndex === 'number'
+      ) {
+        return `${historyItem.movieId}:${historyItem.lastServerIndex}:${historyItem.lastEpisodeIndex}`;
+      }
+
+      return historyItem.movieId;
+    };
+
     const current = await getHistory();
-    const next = current.filter((h) => h.movieId !== item.movieId);
+    const targetIdentity = getHistoryIdentity(item);
+    const next = current.filter((h) => getHistoryIdentity(h) !== targetIdentity);
     next.unshift(item);
     const limited = next.slice(0, 50);
     await saveHistory(limited);
