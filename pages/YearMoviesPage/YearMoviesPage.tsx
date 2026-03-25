@@ -7,11 +7,11 @@ import { useGetYearMovies } from '@/services/api/hooks';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  View,
+    ActivityIndicator,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -95,7 +95,6 @@ export const YearMoviesPage: React.FC<YearMoviesPageProps> = ({
         title={`${title}`}
         showBackIcon={true}
         onBackPress={() => router.back()}
-        showSearchIcon={false}
       />
       <FlatList
         data={allMovies.map(formatMovieUrl)}

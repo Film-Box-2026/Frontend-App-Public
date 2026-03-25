@@ -22,6 +22,21 @@ export interface VNPayResponse {
   };
 }
 
+export interface MockPaymentInput {
+  cardNumber: string;
+  cvv: string;
+  pin: string;
+}
+
+export interface MockPaymentResult {
+  code: string;
+  message: string;
+  transactionId: string;
+  status: 'success' | 'failed' | 'cancelled' | 'timeout';
+  amount: number;
+  plan: string;
+}
+
 const VNP_VERSION = '2.1.0';
 const VNP_COMMAND = 'pay';
 const VNP_TMN_CODE = 'TMNCODE123'; // Mock TMN Code
@@ -97,18 +112,68 @@ export const vnpayService = {
     };
   },
 
-  mockPaymentFlow: async (amount: number, plan: string) => {
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+  mockPaymentFlow: async (
+    amount: number,
+    plan: string,
+    input: MockPaymentInput
+  ): Promise<MockPaymentResult> => {
+    const cardNumber = String(input.cardNumber || '').replace(/\D/g, '');
+    const cvv = String(input.cvv || '').trim();
+    const pin = String(input.pin || '').trim();
+    const transactionId = generateTxnRef();
 
-    // Random success/failure for demo
-    const isSuccess = Math.random() > 0.2; // 80% success rate
+    if (cardNumber.length !== 16) {
+      return {
+        code: '13',
+        message: 'Số thẻ không hợp lệ. Vui lòng nhập đúng 16 số.',
+        transactionId,
+        status: 'failed',
+        amount,
+        plan,
+      };
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1700));
+
+    if (pin === '9999') {
+      return {
+        code: '24',
+        message: 'Giao dịch đã bị hủy bởi người dùng',
+        transactionId,
+        status: 'cancelled',
+        amount,
+        plan,
+      };
+    }
+
+    if (cvv === '888' && pin === '8888') {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      return {
+        code: '91',
+        message: 'Hệ thống quá thời gian xử lý giao dịch',
+        transactionId,
+        status: 'timeout',
+        amount,
+        plan,
+      };
+    }
+
+    if (cvv === '123' && pin === '1234') {
+      return {
+        code: '00',
+        message: 'Thanh toán thành công',
+        transactionId,
+        status: 'success',
+        amount,
+        plan,
+      };
+    }
 
     return {
-      code: isSuccess ? '00' : '99',
-      message: isSuccess ? 'Payment successful' : 'Payment failed',
-      transactionId: generateTxnRef(),
-      status: isSuccess ? 'success' : 'failed',
+      code: '99',
+      message: 'Thanh toán thất bại. Vui lòng kiểm tra lại thông tin thẻ.',
+      transactionId,
+      status: 'failed',
       amount,
       plan,
     };

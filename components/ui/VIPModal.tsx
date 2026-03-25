@@ -101,7 +101,7 @@ export const VIPModal: React.FC<VIPModalProps> = ({
     upgradeButton: {
       height: 48,
       borderRadius: 12,
-      alignment: 'center',
+      alignItems: 'center',
       justifyContent: 'center',
       overflow: 'hidden',
     },

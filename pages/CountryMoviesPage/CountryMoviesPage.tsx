@@ -7,11 +7,11 @@ import { useGetCountryMovies } from '@/services/api/hooks';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  View,
+    ActivityIndicator,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -40,8 +40,6 @@ export const CountryMoviesPage: React.FC<CountryMoviesPageProps> = ({
     limit: 20,
     sort_field: 'modified.time',
   });
-
-  // Accumulate movies from different pages
   useEffect(() => {
     if (countryMoviesData?.items && countryMoviesData.items.length > 0) {
       if (page === 1) {
@@ -90,15 +88,12 @@ export const CountryMoviesPage: React.FC<CountryMoviesPageProps> = ({
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <Header
         title={title}
         showBackIcon={true}
         onBackPress={() => router.back()}
-        onSearchPress={() => {
-          // Handle search
-        }}
-        showSearchIcon={false}
+        onSearchPress={() => router.push('/search')}
       />
       <FlatList
         data={allMovies.map(formatMovieUrl)}

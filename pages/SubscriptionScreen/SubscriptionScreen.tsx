@@ -51,10 +51,10 @@ export const SubscriptionScreen: React.FC = () => {
     }, [loadCurrentSubscription])
   );
 
-  const handleUpgradeToBasic = async () => {
+  const handleUpgradeToPremium = async () => {
     setLoading(true);
     try {
-      const result = await subscriptionService.upgradeToBasic();
+      const result = await subscriptionService.upgradeToPremium();
       setSubscription(result);
 
       const expiryDate = new Date(result.expiredAt || 0).toLocaleDateString(
@@ -62,7 +62,7 @@ export const SubscriptionScreen: React.FC = () => {
       );
       Alert.alert(
         'Nâng cấp thành công!',
-        `Bạn đã nâng cấp lên gói Cơ Bản\n\nHết hạn: ${expiryDate}`,
+        `Bạn đã nâng cấp lên gói Premium\n\nHết hạn: ${expiryDate}`,
         [{ text: 'OK', onPress: () => router.back() }]
       );
     } catch (error) {
@@ -107,7 +107,7 @@ export const SubscriptionScreen: React.FC = () => {
 
     return (
       <View key={plan.id} style={styles.planCardContainer}>
-        {plan.id === 'basic' && (
+        {plan.id === 'premium' && (
           <LinearGradient
             colors={['#3B82F6', '#1E40AF']}
             start={{ x: 0, y: 0 }}
@@ -120,8 +120,8 @@ export const SubscriptionScreen: React.FC = () => {
 
         <LinearGradient
           colors={
-            plan.id === 'basic'
-              ? ['#3B82F6', '#1F2937']
+            plan.id === 'premium'
+              ? ['#FF7A00', '#662F00']
               : colorScheme === 'dark'
                 ? ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']
                 : ['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.02)']
@@ -132,7 +132,7 @@ export const SubscriptionScreen: React.FC = () => {
             styles.planCard,
             {
               borderColor:
-                plan.id === 'basic' ? '#3B82F6' : 'rgba(255,255,255,0.1)',
+                plan.id === 'premium' ? '#FF7A00' : 'rgba(255,255,255,0.1)',
               backgroundColor: undefined,
             },
           ]}
@@ -142,7 +142,7 @@ export const SubscriptionScreen: React.FC = () => {
               <Text
                 style={[
                   styles.planName,
-                  { color: plan.id === 'basic' ? '#3B82F6' : colors.text },
+                  { color: plan.id === 'premium' ? '#FF7A00' : colors.text },
                 ]}
               >
                 {plan.name}
@@ -152,7 +152,7 @@ export const SubscriptionScreen: React.FC = () => {
                   styles.planPrice,
                   {
                     color:
-                      plan.id === 'basic'
+                      plan.id === 'premium'
                         ? '#FFF'
                         : colors.tabIconDefault,
                   },
@@ -166,7 +166,7 @@ export const SubscriptionScreen: React.FC = () => {
                     styles.planDuration,
                     {
                       color:
-                        plan.id === 'basic'
+                        plan.id === 'premium'
                           ? 'rgba(255,255,255,0.8)'
                           : colors.tabIconDefault,
                     },
@@ -182,7 +182,7 @@ export const SubscriptionScreen: React.FC = () => {
                   styles.currentBadge,
                   {
                     backgroundColor:
-                      plan.id === 'basic'
+                      plan.id === 'premium'
                         ? 'rgba(255,255,255,0.2)'
                         : colors.tint,
                   },
@@ -203,14 +203,14 @@ export const SubscriptionScreen: React.FC = () => {
                 <Ionicons
                   name="checkmark-circle"
                   size={16}
-                  color={plan.id === 'basic' ? '#3B82F6' : colors.tint}
+                  color={plan.id === 'premium' ? '#FF7A00' : colors.tint}
                 />
                 <Text
                   style={[
                     styles.featureText,
                     {
                       color:
-                        plan.id === 'basic'
+                        plan.id === 'premium'
                           ? 'rgba(255,255,255,0.9)'
                           : colors.text,
                     },
@@ -222,7 +222,7 @@ export const SubscriptionScreen: React.FC = () => {
             ))}
           </View>
 
-          {isCurrentPlan && subscription.currentPlan === 'basic' && (
+          {isCurrentPlan && subscription.currentPlan === 'premium' && (
             <View
               style={[
                 styles.expiryInfo,
@@ -249,23 +249,23 @@ export const SubscriptionScreen: React.FC = () => {
               styles.actionButton,
               {
                 backgroundColor:
-                  plan.id === 'basic' && isCurrentPlan
+                  plan.id === 'premium' && isCurrentPlan
                     ? 'transparent'
-                    : plan.id === 'basic'
-                      ? '#3B82F6'
+                    : plan.id === 'premium'
+                      ? '#FF7A00'
                       : colors.tint,
-                borderColor: plan.id === 'basic' ? '#3B82F6' : 'transparent',
-                borderWidth: plan.id === 'basic' && isCurrentPlan ? 1 : 0,
+                borderColor: plan.id === 'premium' ? '#FF7A00' : 'transparent',
+                borderWidth: plan.id === 'premium' && isCurrentPlan ? 1 : 0,
               },
             ]}
             onPress={() => {
               if (isCurrentPlan) {
-                if (plan.id === 'basic') {
+                if (plan.id === 'premium') {
                   handleDowngradeToFree();
                 }
               } else {
-                if (plan.id === 'basic') {
-                  handleUpgradeToBasic();
+                if (plan.id === 'premium') {
+                  handleUpgradeToPremium();
                 }
               }
             }}
@@ -273,7 +273,7 @@ export const SubscriptionScreen: React.FC = () => {
           >
             {loading ? (
               <ActivityIndicator
-                color={plan.id === 'basic' ? '#FFF' : colors.text}
+                color={plan.id === 'premium' ? '#FFF' : colors.text}
               />
             ) : (
               <Text
@@ -281,14 +281,14 @@ export const SubscriptionScreen: React.FC = () => {
                   styles.buttonText,
                   {
                     color:
-                      plan.id === 'basic' && isCurrentPlan
-                        ? '#3B82F6'
+                      plan.id === 'premium' && isCurrentPlan
+                        ? '#FF7A00'
                         : '#FFF',
                   },
                 ]}
               >
                 {isCurrentPlan
-                  ? plan.id === 'basic'
+                  ? plan.id === 'premium'
                     ? 'Gói hiện tại'
                     : 'Không thay đổi'
                   : 'Nâng cấp'}

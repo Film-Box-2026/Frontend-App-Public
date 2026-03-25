@@ -4,17 +4,19 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { CartoonMovieCard } from '@/pages/CartoonPage/components';
 import { useGetListMovies } from '@/services/api/hooks';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  View,
+    ActivityIndicator,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const TVShowsPage: React.FC = () => {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [page, setPage] = useState(1);
@@ -91,8 +93,7 @@ export const TVShowsPage: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Header
         title="TV Shows"
-        onSearchPress={() => {}}
-        showSearchIcon={false}
+        onSearchPress={() => router.push('/search')}
       />
       <FlatList
         data={allMovies.map(formatMovieUrl)}

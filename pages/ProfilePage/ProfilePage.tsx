@@ -2,7 +2,6 @@ import { MovieCard } from '@/components/cards';
 import { Header } from '@/components/layout';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useSubscription } from '@/hooks/useSubscription';
 import { clearAllData } from '@/services/storage/storageService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout } from '@/store/slices/Auth/authSlice';
@@ -11,22 +10,29 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type TabType = 'profile' | 'watchlist' | 'history';
 
-export const ProfilePage: React.FC = () => {
+interface ProfilePageProps {
+  initialTab?: TabType;
+}
+
+export const ProfilePage: React.FC<ProfilePageProps> = ({
+  initialTab = 'profile',
+}) => {
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = Colors[colorScheme ?? 'dark'];
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -34,9 +40,17 @@ export const ProfilePage: React.FC = () => {
   const watchlist = useAppSelector((state) => state.watchlist.items);
   const history = useAppSelector((state) => state.history.items);
   const ratings = useAppSelector((state) => state.rating.items);
-  const { subscription, isActive, remainingDays } = useSubscription();
+  const isVipActive = useAppSelector((state) => {
+    const subscription = state.payment.subscription;
+    if (!subscription || subscription.status !== 'active' || subscription.plan === 'free') {
+      return false;
+    }
 
-  const [activeTab, setActiveTab] = useState<TabType>('profile');
+    const expiryDate = new Date(subscription.expiryDate);
+    return !Number.isNaN(expiryDate.getTime()) && expiryDate.getTime() > Date.now();
+  });
+
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [loggingOut, setLoggingOut] = useState(false);
 
   const averageRating =
@@ -136,10 +150,6 @@ export const ProfilePage: React.FC = () => {
     );
   };
 
-  const handleUpgradeVIP = () => {
-    router.push('/subscription');
-  };
-
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -148,18 +158,35 @@ export const ProfilePage: React.FC = () => {
     scrollContent: {
       paddingHorizontal: 16,
       paddingBottom: 40,
-      paddingTop: 12,
+      paddingTop: 10,
       gap: 16,
     },
+    topGlowWrap: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 0,
+      height: 210,
+      pointerEvents: 'none',
+    },
+    topGlow: {
+      flex: 1,
+      opacity: 0.25,
+    },
     heroCard: {
-      borderRadius: 18,
+      borderRadius: 20,
       overflow: 'hidden',
-      borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.12)',
+      borderWidth: 1.2,
+      borderColor: 'rgba(255,255,255,0.14)',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.2,
+      shadowRadius: 18,
+      elevation: 8,
     },
     heroGradient: {
       paddingHorizontal: 16,
-      paddingVertical: 18,
+      paddingVertical: 16,
     },
     heroTopRow: {
       flexDirection: 'row',
@@ -178,11 +205,27 @@ export const ProfilePage: React.FC = () => {
       color: '#fff',
       fontSize: 11,
       fontWeight: '700',
-      letterSpacing: 0.5,
+      letterSpacing: 0.4,
       textTransform: 'uppercase',
     },
+    memberAccent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 999,
+      backgroundColor: 'rgba(13, 18, 29, 0.36)',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.18)',
+    },
+    memberAccentText: {
+      color: '#D7E6FF',
+      fontSize: 11,
+      fontWeight: '700',
+    },
     heroMain: {
-      marginTop: 16,
+      marginTop: 14,
       flexDirection: 'row',
       gap: 14,
       alignItems: 'center',
@@ -205,7 +248,7 @@ export const ProfilePage: React.FC = () => {
       gap: 4,
     },
     userName: {
-      fontSize: 22,
+      fontSize: 21,
       fontWeight: '800',
       color: '#fff',
     },
@@ -223,17 +266,22 @@ export const ProfilePage: React.FC = () => {
       flexWrap: 'wrap',
       justifyContent: 'space-between',
       gap: 8,
-      marginTop: 14,
+      marginTop: 12,
     },
     statCard: {
       width: '48.5%',
-      borderRadius: 12,
+      borderRadius: 13,
       paddingVertical: 12,
       paddingHorizontal: 10,
       backgroundColor: 'rgba(0,0,0,0.2)',
       borderWidth: 1,
       borderColor: 'rgba(255,255,255,0.12)',
-      gap: 5,
+      gap: 4,
+    },
+    statTopRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
     },
     statValue: {
       fontSize: 22,
@@ -244,6 +292,26 @@ export const ProfilePage: React.FC = () => {
       fontSize: 12,
       color: 'rgba(255,255,255,0.85)',
       fontWeight: '600',
+    },
+    sectionShell: {
+      borderRadius: 16,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.08)',
+      backgroundColor:
+        colorScheme === 'dark'
+          ? 'rgba(255,255,255,0.04)'
+          : 'rgba(255,255,255,0.96)',
+    },
+    sectionHeader: {
+      paddingHorizontal: 14,
+      paddingTop: 14,
+      paddingBottom: 10,
+      borderBottomWidth: 1,
+      borderBottomColor:
+        colorScheme === 'dark'
+          ? 'rgba(255,255,255,0.05)'
+          : 'rgba(0,0,0,0.06)',
     },
     sectionCard: {
       borderRadius: 16,
@@ -259,15 +327,22 @@ export const ProfilePage: React.FC = () => {
       fontSize: 15,
       fontWeight: '700',
       color: colors.text,
-      marginBottom: 10,
+      marginBottom: 2,
+    },
+    sectionSubtitle: {
+      fontSize: 12,
+      color: colors.tabIconDefault,
     },
     quickActionsRow: {
       flexDirection: 'row',
       gap: 10,
+      paddingHorizontal: 14,
+      paddingBottom: 14,
+      paddingTop: 4,
     },
     quickAction: {
       flex: 1,
-      borderRadius: 10,
+      borderRadius: 12,
       paddingVertical: 12,
       paddingHorizontal: 8,
       alignItems: 'center',
@@ -320,21 +395,23 @@ export const ProfilePage: React.FC = () => {
     },
     tabContainer: {
       flexDirection: 'row',
-      borderRadius: 12,
-      padding: 4,
+      borderRadius: 14,
+      padding: 5,
       backgroundColor:
         colorScheme === 'dark'
-          ? 'rgba(255,255,255,0.06)'
+          ? 'rgba(255,255,255,0.07)'
           : 'rgba(0,0,0,0.06)',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.08)',
     },
     tab: {
       flex: 1,
       paddingVertical: 10,
       alignItems: 'center',
-      borderRadius: 10,
+      borderRadius: 11,
     },
     activeTab: {
-      backgroundColor: colors.tint,
+      backgroundColor: '#2A3A5A',
     },
     tabText: {
       fontSize: 13,
@@ -361,7 +438,7 @@ export const ProfilePage: React.FC = () => {
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: 24,
-      marginTop: 8,
+      marginTop: 12,
       borderRadius: 12,
       borderWidth: 1,
       borderColor: 'rgba(255,255,255,0.08)',
@@ -371,7 +448,7 @@ export const ProfilePage: React.FC = () => {
           : 'rgba(0,0,0,0.02)',
     },
     emptyIcon: {
-      fontSize: 44,
+      fontSize: 52,
       marginBottom: 10,
       textAlign: 'center',
     },
@@ -388,7 +465,7 @@ export const ProfilePage: React.FC = () => {
       textAlign: 'center',
     },
     moviesGrid: {
-      marginTop: 12,
+      marginTop: 10,
     },
     movieCardWrapper: {
       flex: 1,
@@ -399,7 +476,7 @@ export const ProfilePage: React.FC = () => {
       fontSize: 15,
       fontWeight: '700',
       color: colors.text,
-      marginTop: 14,
+      marginTop: 12,
       marginBottom: 2,
     },
     settingsSection: {
@@ -412,6 +489,23 @@ export const ProfilePage: React.FC = () => {
           ? 'rgba(255,255,255,0.04)'
           : 'rgba(0,0,0,0.03)',
       marginVertical: 8,
+    },
+    settingsHeader: {
+      paddingHorizontal: 16,
+      paddingTop: 14,
+      paddingBottom: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: 'rgba(255,255,255,0.06)',
+    },
+    settingsHeaderTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    settingsHeaderSubtitle: {
+      marginTop: 3,
+      fontSize: 12,
+      color: colors.tabIconDefault,
     },
     settingsOptionRow: {
       paddingHorizontal: 16,
@@ -441,10 +535,7 @@ export const ProfilePage: React.FC = () => {
       fontWeight: '600',
       color: '#FF6B6B',
     },
-    notificationCornerButton: {
-      position: 'absolute',
-      right: 16,
-      top: 14,
+    notificationHeaderButton: {
       width: 38,
       height: 38,
       borderRadius: 19,
@@ -465,48 +556,21 @@ export const ProfilePage: React.FC = () => {
       borderRadius: 5,
       backgroundColor: '#FF2D55',
     },
-    vipCard: {
-      borderRadius: 16,
-      padding: 14,
-      overflow: 'hidden',
+    historyQuickCard: {
+      borderRadius: 14,
+      padding: 12,
       borderWidth: 1,
-      borderColor: 'rgba(255,107,53,0.3)',
+      borderColor: 'rgba(255,255,255,0.08)',
+      backgroundColor:
+        colorScheme === 'dark'
+          ? 'rgba(255,255,255,0.04)'
+          : 'rgba(0,0,0,0.03)',
+      gap: 10,
     },
-    vipCardContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: 12,
-    },
-    vipLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      flex: 1,
-    },
-    vipInfo: {
-      gap: 4,
-    },
-    vipTitle: {
-      fontSize: 16,
+    historyQuickTitle: {
+      color: colors.text,
+      fontSize: 14,
       fontWeight: '700',
-    },
-    vipSubtitle: {
-      fontSize: 12,
-      fontWeight: '500',
-    },
-    vipButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      borderRadius: 8,
-    },
-    vipButtonText: {
-      fontSize: 13,
-      fontWeight: '700',
-      color: '#FFF',
     },
   });
 
@@ -522,35 +586,39 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
+      <View style={styles.topGlowWrap}>
+        <LinearGradient
+          colors={['rgba(68,124,209,0.45)', 'rgba(26,34,55,0)']}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={styles.topGlow}
+        />
+      </View>
+
       <Header
         title="Tài Khoản"
-        onSearchPress={() => {}}
         showSearchIcon={false}
+        rightContent={(
+          <Pressable
+            style={styles.notificationHeaderButton}
+            onPress={handleNotifications}
+          >
+            <Ionicons name="notifications-outline" size={21} color={colors.text} />
+            <View style={styles.notificationBadge} />
+          </Pressable>
+        )}
       />
 
-      <Pressable
-        style={styles.notificationCornerButton}
-        onPress={handleNotifications}
-      >
-        <Ionicons name="notifications-outline" size={21} color={colors.text} />
-        <View style={styles.notificationBadge} />
-      </Pressable>
-
-      <FlatList
-        data={[0]}
-        keyExtractor={() => 'profile-page'}
-        showsVerticalScrollIndicator={false}
-        renderItem={() => null}
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
-        nestedScrollEnabled={true}
-        ListHeaderComponent={
-          <>
+        showsVerticalScrollIndicator={false}
+      >
             <View style={styles.heroCard}>
               <LinearGradient
                 colors={
                   colorScheme === 'dark'
-                    ? ['#0f1f3a', '#3a1250', '#1b263b']
-                    : ['#2575fc', '#6a11cb', '#1f4ea8']
+                    ? ['#0F2644', '#28345A', '#3A1D46']
+                    : ['#2D66BD', '#3D4E8A', '#5E3A8B']
                 }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -560,7 +628,12 @@ export const ProfilePage: React.FC = () => {
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>Film Box Member</Text>
                   </View>
-                  <Ionicons name="sparkles" size={18} color="#fff" />
+                  <View style={styles.memberAccent}>
+                    <Ionicons name="diamond-outline" size={14} color="#D7E6FF" />
+                    <Text style={styles.memberAccentText}>
+                      {isVipActive ? 'Premium' : 'Standard'}
+                    </Text>
+                  </View>
                 </View>
 
                 <View style={styles.heroMain}>
@@ -593,20 +666,32 @@ export const ProfilePage: React.FC = () => {
 
                 <View style={styles.statsGrid}>
                   <View style={styles.statCard}>
+                    <View style={styles.statTopRow}>
+                      <Text style={styles.statLabel}>Phim đã lưu</Text>
+                      <Ionicons name="bookmark-outline" size={14} color="#CFE3FF" />
+                    </View>
                     <Text style={styles.statValue}>{watchlist.length}</Text>
-                    <Text style={styles.statLabel}>Phim đã lưu</Text>
                   </View>
                   <View style={styles.statCard}>
+                    <View style={styles.statTopRow}>
+                      <Text style={styles.statLabel}>Lần xem</Text>
+                      <Ionicons name="time-outline" size={14} color="#CFE3FF" />
+                    </View>
                     <Text style={styles.statValue}>{history.length}</Text>
-                    <Text style={styles.statLabel}>Lần xem gần đây</Text>
                   </View>
                   <View style={styles.statCard}>
+                    <View style={styles.statTopRow}>
+                      <Text style={styles.statLabel}>Đánh giá</Text>
+                      <Ionicons name="star-outline" size={14} color="#CFE3FF" />
+                    </View>
                     <Text style={styles.statValue}>{ratings.length}</Text>
-                    <Text style={styles.statLabel}>Đánh giá đã gửi</Text>
                   </View>
                   <View style={styles.statCard}>
+                    <View style={styles.statTopRow}>
+                      <Text style={styles.statLabel}>Điểm TB</Text>
+                      <Ionicons name="trending-up-outline" size={14} color="#CFE3FF" />
+                    </View>
                     <Text style={styles.statValue}>{averageRating}</Text>
-                    <Text style={styles.statLabel}>Điểm trung bình</Text>
                   </View>
                 </View>
               </LinearGradient>
@@ -637,52 +722,35 @@ export const ProfilePage: React.FC = () => {
 
             {activeTab === 'profile' && (
               <>
-                <LinearGradient
-                  colors={
-                    subscription.currentPlan === 'basic' && isActive
-                      ? ['#FF6B35', '#F7931E']
-                      : colorScheme === 'dark'
-                        ? ['rgba(255,107,53,0.15)', 'rgba(247,147,30,0.15)']
-                        : ['rgba(255,107,53,0.1)', 'rgba(247,147,30,0.1)']
-                  }
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.vipCard}
-                >
-                  <View style={styles.vipCardContent}>
-                    <View style={styles.vipLeft}>
-                      <Ionicons
-                        name="star"
-                        size={32}
-                        color={subscription.currentPlan === 'basic' && isActive ? '#FFF' : '#FF6B35'}
-                      />
-                      <View style={styles.vipInfo}>
-                        <Text style={[styles.vipTitle, { color: subscription.currentPlan === 'basic' && isActive ? '#FFF' : colors.text }]}>
-                          {subscription.currentPlan === 'basic' && isActive ? 'Gói Cơ Bản Đang Hoạt Động' : 'Nâng Cấp VIP'}
-                        </Text>
-                        <Text style={[styles.vipSubtitle, { color: subscription.currentPlan === 'basic' && isActive ? 'rgba(255,255,255,0.9)' : colors.tabIconDefault }]}>
-                          {subscription.currentPlan === 'basic' && isActive
-                            ? `Gói: basic • ${remainingDays} ngày còn lại`
-                            : 'Hưởng quyền xem 4K, xem offline'}
-                        </Text>
-                      </View>
-                    </View>
-                    <Pressable
-                      style={[
-                        styles.vipButton,
-                        { backgroundColor: subscription.currentPlan === 'basic' && isActive ? 'rgba(0,0,0,0.2)' : '#FF6B35' },
-                      ]}
-                      onPress={handleUpgradeVIP}
-                    >
-                      <Text style={styles.vipButtonText}>
-                        {subscription.currentPlan === 'basic' && isActive ? 'Chi tiết' : 'Nâng cấp'}
-                      </Text>
-                      <Ionicons name="chevron-forward" size={16} color="#FFF" />
+                <View style={styles.sectionShell}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Phím tắt</Text>
+                    <Text style={styles.sectionSubtitle}>Truy cập nhanh chức năng thường dùng</Text>
+                  </View>
+                  <View style={styles.quickActionsRow}>
+                    <Pressable style={styles.quickAction} onPress={handleNotifications}>
+                      <Ionicons name="notifications-outline" size={20} color={colors.tint} />
+                      <Text style={styles.quickActionText}>Thông báo</Text>
+                    </Pressable>
+                    <Pressable style={styles.quickAction} onPress={handleAccount}>
+                      <Ionicons name="person-circle-outline" size={20} color={colors.tint} />
+                      <Text style={styles.quickActionText}>Tài khoản</Text>
+                    </Pressable>
+                    <Pressable style={styles.quickAction} onPress={handleDownload}>
+                      <Ionicons name="download-outline" size={20} color={colors.tint} />
+                      <Text style={styles.quickActionText}>Tải về</Text>
                     </Pressable>
                   </View>
-                </LinearGradient>
+                </View>
 
                 <View style={styles.settingsSection}>
+                  <View style={styles.settingsHeader}>
+                    <Text style={styles.settingsHeaderTitle}>Thiết lập</Text>
+                    <Text style={styles.settingsHeaderSubtitle}>
+                      Tùy chỉnh ứng dụng và bảo mật tài khoản
+                    </Text>
+                  </View>
+
                   <Pressable style={styles.settingsOptionRow} onPress={handleDownload}>
                     <View style={styles.settingsOptionLeft}>
                       <Ionicons name="download" size={20} color={colors.tint} />
@@ -745,6 +813,25 @@ export const ProfilePage: React.FC = () => {
                     {loggingOut && <ActivityIndicator color="#FF6B6B" size="small" />}
                   </Pressable>
                 </View>
+
+                {recentHistory.length > 0 && (
+                  <View style={styles.historyQuickCard}>
+                    <Text style={styles.historyQuickTitle}>Vừa xem gần đây</Text>
+                    {recentHistory.map((item, index) => (
+                      <View key={`${item.movieId}-${index}`} style={styles.recentItem}>
+                        <View style={styles.recentItemLeft}>
+                          <View style={styles.recentBullet}>
+                            <Ionicons name="play" size={13} color="#4CAF50" />
+                          </View>
+                          <Text style={styles.recentTitle} numberOfLines={1}>
+                            {item.name}
+                          </Text>
+                        </View>
+                        <Text style={styles.recentTime}>#{index + 1}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </>
             )}
 
@@ -769,7 +856,11 @@ export const ProfilePage: React.FC = () => {
                   </View>
                 ) : (
                   <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyIcon}>📽️</Text>
+                    <Ionicons
+                      name="bookmark-outline"
+                      size={52}
+                      color="rgba(255,255,255,0.5)"
+                    />
                     <Text style={styles.emptyText}>Watchlist trống</Text>
                     <Text style={styles.emptySubText}>
                       Hãy thêm phim yêu thích vào đây
@@ -800,7 +891,11 @@ export const ProfilePage: React.FC = () => {
                   </View>
                 ) : (
                   <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyIcon}>⏰</Text>
+                    <Ionicons
+                      name="time-outline"
+                      size={52}
+                      color="rgba(255,255,255,0.5)"
+                    />
                     <Text style={styles.emptyText}>History trống</Text>
                     <Text style={styles.emptySubText}>
                       Phim bạn xem sẽ hiển thị ở đây
@@ -809,9 +904,7 @@ export const ProfilePage: React.FC = () => {
                 )}
               </>
             )}
-          </>
-        }
-      />
+      </ScrollView>
     </SafeAreaView>
   );
 };

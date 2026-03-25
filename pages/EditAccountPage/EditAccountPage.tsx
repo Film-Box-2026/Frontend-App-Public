@@ -11,6 +11,8 @@ import {
     ActivityIndicator,
     Alert,
     Image,
+    KeyboardAvoidingView,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -91,7 +93,6 @@ export const EditAccountPage: React.FC = () => {
 
     setIsSaving(true);
     try {
-      // Update Redux store với thông tin mới
       dispatch(
         updateUserInfo({
           name: editedName.trim(),
@@ -232,15 +233,20 @@ export const EditAccountPage: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Header
         title="Chỉnh sửa tài khoản"
-        onSearchPress={() => {}}
-        showSearchIcon={false}
+        onSearchPress={() => router.push('/search')}
       />
 
-      <ScrollView
+      <KeyboardAvoidingView
         style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
       >
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
         <View style={styles.avatarSection}>
           <View style={styles.avatarContainer}>
             {editedAvatar ? (
@@ -311,7 +317,8 @@ export const EditAccountPage: React.FC = () => {
             )}
           </Pressable>
         </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

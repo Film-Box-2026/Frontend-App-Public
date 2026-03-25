@@ -1,6 +1,3 @@
-import { MovieCard } from '@/components/cards';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
@@ -10,13 +7,13 @@ import {
     Text,
     View,
 } from 'react-native';
+import { Movie, MovieCard } from './MovieCard';
 
 interface ProtectedMovieCardProps {
-  movie: any;
+  movie: Movie;
   isLocked: boolean;
-  onPress: (movie: any) => void;
+  onPress: (movie: Movie) => void;
   onUpgradePress?: () => void;
-  width?: number;
 }
 
 
@@ -25,13 +22,9 @@ export const ProtectedMovieCard: React.FC<ProtectedMovieCardProps> = ({
   isLocked,
   onPress,
   onUpgradePress,
-  width,
 }) => {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
-
   return (
-    <View style={[styles.container, { width }]}>
+    <View style={styles.container}>
       <Pressable
         onPress={() => !isLocked && onPress(movie)}
         disabled={isLocked}
@@ -42,7 +35,7 @@ export const ProtectedMovieCard: React.FC<ProtectedMovieCardProps> = ({
           },
         ]}
       >
-        <MovieCard movie={movie} onPress={() => {}} width={width} />
+        <MovieCard movie={movie} onPress={() => {}} />
 
         {isLocked && (
           <LinearGradient

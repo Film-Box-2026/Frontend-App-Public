@@ -50,7 +50,7 @@ export const loginMock = async (params: LoginParams): Promise<AuthResponse> => {
         user: userData.user,
         message: 'Đăng nhập thành công',
       });
-    }, 1000); // Simulate network delay
+    }, 1000); 
   });
 };
 
@@ -99,6 +99,6 @@ export const signupMock = async (params: SignupParams): Promise<AuthResponse> =>
         user: newUser,
         message: 'Đăng ký thành công',
       });
-    }, 1000); // Simulate network delay
+    }, 1000); 
   });
 };

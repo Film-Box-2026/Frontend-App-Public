@@ -1,10 +1,10 @@
+import { Header } from '@/components/layout';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useGetNewMovies } from '@/services/api/hooks';
 import { saveNotificationReadIds } from '@/services/storage/storageService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addReadIds, setReadIds } from '@/store/slices/NotificationSlice/notificationSlice';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -145,23 +145,7 @@ export const NotificationPage: React.FC = () => {
       paddingHorizontal: 14,
     },
     header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingTop: 8,
-      marginBottom: 14,
-    },
-    headerLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      flex: 1,
-    },
-    title: {
-      fontSize: 30,
-      color: colorScheme === 'dark' ? '#FFFFFF' : colors.text,
-      fontWeight: '800',
-      letterSpacing: 0.2,
+      marginBottom: 10,
     },
     clearButton: {
       minWidth: 70,
@@ -288,20 +272,18 @@ export const NotificationPage: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Pressable onPress={() => router.back()}>
-            <Ionicons
-              name="chevron-back"
-              size={28}
-              color={colorScheme === 'dark' ? '#FFFFFF' : colors.text}
-            />
-          </Pressable>
-          <Text style={styles.title}>Notifications ({totalCount})</Text>
-        </View>
-
-        <Pressable style={styles.clearButton} onPress={handleClear}>
-          <Text style={styles.clearText}>Clear</Text>
-        </Pressable>
+        <Header
+          title={`Notifications (${totalCount})`}
+          showBackIcon={true}
+          onBackPress={() => router.back()}
+          onSearchPress={() => router.push('/search')}
+          showMenuIcon={false}
+          rightContent={(
+            <Pressable style={styles.clearButton} onPress={handleClear}>
+              <Text style={styles.clearText}>Clear</Text>
+            </Pressable>
+          )}
+        />
       </View>
 
       <View style={styles.tabs}>

@@ -10,6 +10,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useGetDetailMovie, useGetListMovies } from '@/services/api/hooks';
 import { upsertHistoryItem } from '@/services/storage/storageService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { MovieCommentReply } from '@/store/slices/CommentSlice/commentSlice';
 import { addToHistory } from '@/store/slices/HistorySlice/historySlice';
 import { checkMovieAccessibility } from '@/utils/subscriptionUtils';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,18 +18,18 @@ import { Image as ExpoImage } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-    Alert,
-    Animated,
-    Keyboard,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Animated,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VideoPlayerModal } from './components';
 import { createDetailMovieStyles } from './styles';
 
@@ -41,6 +42,7 @@ interface Episode {
 }
 
 export const DetailMoviePage: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
   const router = useRouter();
@@ -60,6 +62,8 @@ export const DetailMoviePage: React.FC = () => {
   const [currentPlaybackTime, setCurrentPlaybackTime] = useState(0);
   const [currentPlaybackDuration, setCurrentPlaybackDuration] = useState(0);
   const [commentText, setCommentText] = useState('');
+  const [activeReplyCommentId, setActiveReplyCommentId] = useState<string | null>(null);
+  const [replyTextByCommentId, setReplyTextByCommentId] = useState<Record<string, string>>({});
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView | null>(null);
 
@@ -73,8 +77,16 @@ export const DetailMoviePage: React.FC = () => {
     episodeSlug: selectedEpisode?.slug,
     totalDuration: currentPlaybackDuration,
   });
-  const { getMovieComments, addComment, canDeleteComment, deleteComment } =
-    useMovieComments();
+  const {
+    getMovieComments,
+    getMovieCommentsCount,
+    addComment,
+    addReply,
+    canDeleteComment,
+    canDeleteReply,
+    deleteComment,
+    deleteReply,
+  } = useMovieComments();
 
   const getTypeList = (
     type: string | undefined
@@ -371,6 +383,7 @@ export const DetailMoviePage: React.FC = () => {
   };
 
   const movieComments = movieData ? getMovieComments(movieData._id) : [];
+  const movieCommentsCount = movieData ? getMovieCommentsCount(movieData._id) : 0;
 
   const formatCommentTime = (createdAt: string) => {
     const createdTime = new Date(createdAt).getTime();
@@ -448,6 +461,93 @@ export const DetailMoviePage: React.FC = () => {
     ]);
   };
 
+  const handleReplyPress = (commentId: string) => {
+    if (!requireAuth()) {
+      return;
+    }
+
+    setActiveReplyCommentId((prev) => (prev === commentId ? null : commentId));
+  };
+
+  const handleReplyTextChange = (commentId: string, value: string) => {
+    setReplyTextByCommentId((prev) => ({
+      ...prev,
+      [commentId]: value,
+    }));
+  };
+
+  const handleSubmitReply = async (parentCommentId: string) => {
+    if (!requireAuth() || !movieData) {
+      return;
+    }
+
+    const rawReply = replyTextByCommentId[parentCommentId] || '';
+    const normalizedReply = rawReply.trim();
+    if (!normalizedReply) {
+      Alert.alert('Thiếu nội dung', 'Vui lòng nhập phản hồi trước khi gửi.');
+      return;
+    }
+
+    const isSaved = await addReply({
+      movieId: movieData._id,
+      parentCommentId,
+      content: normalizedReply,
+    });
+
+    if (isSaved) {
+      setReplyTextByCommentId((prev) => ({ ...prev, [parentCommentId]: '' }));
+      setActiveReplyCommentId(null);
+      return;
+    }
+
+    Alert.alert('Lỗi', 'Không thể gửi phản hồi lúc này.');
+  };
+
+  const handleDeleteReply = async (parentCommentId: string, replyId: string) => {
+    if (!movieData) {
+      return;
+    }
+
+    Alert.alert('Xóa phản hồi', 'Bạn có chắc muốn xóa phản hồi này?', [
+      { text: 'Hủy', style: 'cancel' },
+      {
+        text: 'Xóa',
+        style: 'destructive',
+        onPress: async () => {
+          const isDeleted = await deleteReply({
+            movieId: movieData._id,
+            parentCommentId,
+            replyId,
+          });
+
+          if (!isDeleted) {
+            Alert.alert('Lỗi', 'Không thể xóa phản hồi này.');
+          }
+        },
+      },
+    ]);
+  };
+
+  const renderReplyItem = (parentCommentId: string, reply: MovieCommentReply) => (
+    <View key={reply.id} style={styles.replyItem}>
+      <View style={styles.commentHeader}>
+        <Text style={styles.commentUserName}>{reply.userName}</Text>
+        <View style={styles.commentMeta}>
+          <Text style={styles.commentTime}>{formatCommentTime(reply.createdAt)}</Text>
+          {canDeleteReply(reply) && (
+            <Pressable
+              style={styles.deleteCommentButton}
+              onPress={() => handleDeleteReply(parentCommentId, reply.id)}
+            >
+              <Text style={styles.deleteCommentText}>Xóa</Text>
+            </Pressable>
+          )}
+        </View>
+      </View>
+      <Text style={styles.commentContent}>{reply.content}</Text>
+    </View>
+  );
+
   if (isLoading || !formattedMovieData) {
     return <LoadingPage message="Đang tải chi tiết phim..." />;
   }
@@ -455,7 +555,7 @@ export const DetailMoviePage: React.FC = () => {
   const handleCommentInputFocus = () => {
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 300);
+    }, 420);
   };
 
   const handleScrollViewTouchStart = () => {
@@ -466,7 +566,7 @@ export const DetailMoviePage: React.FC = () => {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.safeContainer}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 12 : 0}
     >
       <SafeAreaView
         style={styles.safeContainer}
@@ -498,6 +598,8 @@ export const DetailMoviePage: React.FC = () => {
         ref={scrollViewRef}
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
         scrollEventThrottle={16}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -694,7 +796,10 @@ export const DetailMoviePage: React.FC = () => {
         </View>
 
         <View style={styles.commentSection}>
-          <Text style={styles.sectionTitle}>Bình luận</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Bình luận</Text>
+            <Text style={styles.commentCountText}>{movieCommentsCount}</Text>
+          </View>
 
           {isAuthenticated ? (
             <View style={styles.commentInputWrapper}>
@@ -749,9 +854,57 @@ export const DetailMoviePage: React.FC = () => {
                           <Text style={styles.deleteCommentText}>Xóa</Text>
                         </Pressable>
                       )}
+                      <Pressable
+                        style={styles.replyActionButton}
+                        onPress={() => handleReplyPress(comment.id)}
+                      >
+                        <Text style={styles.replyActionText}>Phản hồi</Text>
+                      </Pressable>
                     </View>
                   </View>
                   <Text style={styles.commentContent}>{comment.content}</Text>
+
+                  {(comment.replies || []).length > 0 && (
+                    <View style={styles.repliesList}>
+                      {(comment.replies || []).map((reply) =>
+                        renderReplyItem(comment.id, reply)
+                      )}
+                    </View>
+                  )}
+
+                  {activeReplyCommentId === comment.id && (
+                    <View style={styles.replyInputWrapper}>
+                      <TextInput
+                        style={styles.replyInput}
+                        placeholder="Viết phản hồi..."
+                        placeholderTextColor={colors.tabIconDefault}
+                        value={replyTextByCommentId[comment.id] || ''}
+                        onChangeText={(value) => handleReplyTextChange(comment.id, value)}
+                        multiline
+                        maxLength={300}
+                      />
+                      <View style={styles.replyActionsRow}>
+                        <Pressable
+                          style={styles.replyCancelButton}
+                          onPress={() => {
+                            setActiveReplyCommentId(null);
+                            setReplyTextByCommentId((prev) => ({
+                              ...prev,
+                              [comment.id]: '',
+                            }));
+                          }}
+                        >
+                          <Text style={styles.replyCancelText}>Hủy</Text>
+                        </Pressable>
+                        <Pressable
+                          style={styles.submitCommentButton}
+                          onPress={() => handleSubmitReply(comment.id)}
+                        >
+                          <Text style={styles.submitCommentText}>Gửi</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  )}
                 </View>
               ))
             ) : (

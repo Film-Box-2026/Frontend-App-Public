@@ -90,8 +90,6 @@ export const CinemaPage: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Header
         title="Phim Lẻ"
-        onSearchPress={() => {
-        }}
         showSearchIcon={false}
       />
       <FlatList

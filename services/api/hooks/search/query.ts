@@ -6,11 +6,20 @@ export const useSearchMovies = (
   searchParams: SearchParams,
   options?: { enabled?: boolean }
 ) => {
+  const normalizedKeyword = String(searchParams.keyword ?? '').trim();
+
+  const hasFilters =
+    Boolean(searchParams.category) ||
+    Boolean(searchParams.country) ||
+    Boolean(searchParams.year);
+
   return useQuery({
     queryKey: ['searchMovies', searchParams],
     queryFn: async () => {
       const params = new URLSearchParams();
-      params.append('keyword', searchParams.keyword);
+      if (normalizedKeyword.length > 0) {
+        params.append('keyword', normalizedKeyword);
+      }
       if (searchParams.page)
         params.append('page', searchParams.page.toString());
       if (searchParams.sort_field)
@@ -32,7 +41,8 @@ export const useSearchMovies = (
       return response.data;
     },
     enabled:
-      searchParams.keyword.trim().length > 0 && options?.enabled !== false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+      (normalizedKeyword.length > 0 || hasFilters) &&
+      options?.enabled !== false,
+    staleTime: 1000 * 60 * 5,
   });
 };

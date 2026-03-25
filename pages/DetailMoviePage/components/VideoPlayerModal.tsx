@@ -134,7 +134,6 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         });
       }
     } catch {
-      // Ignore non-JSON messages from embedded players
     }
   };
 

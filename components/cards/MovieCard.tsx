@@ -2,7 +2,7 @@ import { Image as ExpoImage } from 'expo-image';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-interface Movie {
+export interface Movie {
   _id: string;
   name: string;
   origin_name: string;

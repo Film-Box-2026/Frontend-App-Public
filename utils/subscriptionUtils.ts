@@ -11,8 +11,12 @@ export const checkMovieAccessibility = (
 
   const limit = MOVIE_LIMIT_CONFIG[subscription.currentPlan];
 
-  // Basic plan: không giới hạn
+  // Premium plan (hoặc dữ liệu legacy): không giới hạn
   if (limit === null) {
+    return { canWatch: true, remainingMovies: -1 };
+  }
+
+  if (typeof limit !== 'number') {
     return { canWatch: true, remainingMovies: -1 };
   }
 
@@ -41,7 +45,11 @@ export const filterMoviesBySubscription = (
   const limit = MOVIE_LIMIT_CONFIG[subscription.currentPlan];
 
   if (limit === null) {
-    // Basic: tất cả được xem
+    // Premium: tất cả được xem
+    return { accessible: movies, restricted: [] };
+  }
+
+  if (typeof limit !== 'number') {
     return { accessible: movies, restricted: [] };
   }
 

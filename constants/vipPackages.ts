@@ -30,64 +30,35 @@ export const VIP_PACKAGES: VIPPackage[] = [
     color: '#909090',
   },
   {
-    id: 'basic',
-    plan: 'basic',
-    name: 'Basic',
-    description: 'Cơ bản',
-    price: 49000,
-    durationDays: 30,
-    durationLabel: '1 tháng',
-    features: [
-      'Xem phim chất lượng HD',
-      'Giới hạn 2 thiết bị',
-      'Xem không có quảng cáo',
-      'Tải phim để xem offline',
-    ],
-    color: '#4A90E2',
-  },
-  {
     id: 'premium',
     plan: 'premium',
     name: 'Premium',
-    description: 'Cao cấp',
-    price: 99000,
+    description: 'Cao cấp toàn diện',
+    price: 149000,
     durationDays: 30,
     durationLabel: '1 tháng',
     features: [
-      'Xem phim chất lượng 4K',
-      'Giới hạn 4 thiết bị',
-      'Xem không có quảng cáo',
-      'Tải phim để xem offline',
-      'Xem sơ khai phim mới',
+      'Xem phim 4K Dolby Vision',
+      'Giới hạn 6 thiết bị cùng lúc',
+      'Không quảng cáo toàn nền tảng',
+      'Tải offline không giới hạn',
+      'Xem sớm phim mới trước 72 giờ',
+      'Truy cập nội dung độc quyền Premium',
+      'Âm thanh vòm Dolby Atmos',
       'Hỗ trợ ưu tiên 24/7',
+      'Quà tặng 2 voucher mỗi tháng',
     ],
-    color: '#FF9500',
+    color: '#FF7A00',
     popular: true,
-  },
-  {
-    id: 'vip',
-    plan: 'vip',
-    name: 'VIP',
-    description: 'Tất cả các tính năng',
-    price: 199000,
-    durationDays: 30,
-    durationLabel: '1 tháng',
-    features: [
-      'Xem phim chất lượng 4K',
-      'Giới hạn 6 thiết bị',
-      'Xem không có quảng cáo',
-      'Tải phim để xem offline',
-      'Xem sơ khai phim mới (3 ngày trước)',
-      'Hỗ trợ ưu tiên 24/7',
-      'Truy cập nội dung độc quyền',
-      'Nhận thêm 2 Voucher mỗi tháng',
-    ],
-    color: '#FF2D55',
   },
 ];
 
 export const getVIPPackageByPlan = (plan: VIPPlan): VIPPackage | undefined => {
-  return VIP_PACKAGES.find((pkg) => pkg.plan === plan);
+  if (plan === 'free') {
+    return VIP_PACKAGES.find((pkg) => pkg.plan === 'free');
+  }
+
+  return VIP_PACKAGES.find((pkg) => pkg.plan === 'premium');
 };
 
 export const formatPrice = (price: number): string => {

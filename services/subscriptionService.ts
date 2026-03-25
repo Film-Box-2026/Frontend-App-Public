@@ -3,19 +3,37 @@ import { getUserSubscription, saveUserSubscription } from '@/services/storage/st
 
 const MOCK_API_DELAY = 1500;
 
+const normalizeLegacySubscription = (
+  subscription: UserSubscription | ({ currentPlan: string; expiredAt: number | null })
+): UserSubscription => {
+  if (subscription.currentPlan === 'premium' || subscription.currentPlan === 'free') {
+    return subscription as UserSubscription;
+  }
+
+  return {
+    currentPlan: 'premium',
+    expiredAt: subscription.expiredAt,
+  };
+};
+
 export const subscriptionService = {
-  upgradeToBasic: async (): Promise<UserSubscription> => {
+  upgradeToPremium: async (): Promise<UserSubscription> => {
     return new Promise((resolve) => {
       setTimeout(async () => {
         const expiredAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
         const newSubscription: UserSubscription = {
-          currentPlan: 'basic',
+          currentPlan: 'premium',
           expiredAt,
         };
         await saveUserSubscription(newSubscription);
         resolve(newSubscription);
       }, MOCK_API_DELAY);
     });
+  },
+
+  // Giữ lại để tương thích code cũ đang gọi hàm này
+  upgradeToBasic: async (): Promise<UserSubscription> => {
+    return subscriptionService.upgradeToPremium();
   },
 
   downgradeToFree: async (): Promise<UserSubscription> => {
@@ -37,7 +55,11 @@ export const subscriptionService = {
         try {
           const stored = await getUserSubscription();
           if (stored) {
-            resolve(stored);
+            const normalized = normalizeLegacySubscription(stored);
+            if (normalized.currentPlan !== stored.currentPlan) {
+              await saveUserSubscription(normalized);
+            }
+            resolve(normalized);
           } else {
             resolve(DEFAULT_SUBSCRIPTION);
           }
@@ -51,7 +73,7 @@ export const subscriptionService = {
 
   canWatchVIP: (subscription: UserSubscription | null): boolean => {
     if (!subscription) return false;
-    if (subscription.currentPlan === 'basic') {
+    if (subscription.currentPlan === 'premium') {
       if (subscription.expiredAt && subscription.expiredAt < Date.now()) {
         return false;
       }

@@ -1,7 +1,7 @@
 import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
+    DarkTheme,
+    DefaultTheme,
+    ThemeProvider,
 } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -13,24 +13,49 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { RootProvider } from '@/providers/RootProvider';
 import {
-  getComments,
-  getHistory,
-  getNotificationReadIds,
-  getRatings,
-  getResumePoints,
-  getSubscription,
-  getUser,
-  getWatchlist,
+    getComments,
+    getHistory,
+    getNotificationReadIds,
+    getPaymentTransactions,
+    getRatings,
+    getResumePoints,
+    getSubscription,
+    getUser,
+    getWatchlist,
+    saveSubscription,
 } from '@/services/storage/storageService';
 import { useAppDispatch } from '@/store/hooks';
 import { setUser } from '@/store/slices/Auth/authSlice';
 import { setComments } from '@/store/slices/CommentSlice/commentSlice';
 import { setHistory } from '@/store/slices/HistorySlice/historySlice';
 import { setReadIds } from '@/store/slices/NotificationSlice/notificationSlice';
-import { setSubscription } from '@/store/slices/PaymentSlice/paymentSlice';
+import { setSubscription, setTransactions, VIPSubscription } from '@/store/slices/PaymentSlice/paymentSlice';
 import { setRatings } from '@/store/slices/RatingSlice/ratingSlice';
 import { setResumePoints } from '@/store/slices/ResumeSlice/resumeSlice';
 import { setWatchlist } from '@/store/slices/WatchlistSlice/watchlistSlice';
+
+const normalizeSubscription = (subscription: VIPSubscription): VIPSubscription => {
+  if (subscription.plan === 'free') {
+    return {
+      ...subscription,
+      status: 'active',
+    };
+  }
+
+  const expiryDate = new Date(subscription.expiryDate);
+  if (Number.isNaN(expiryDate.getTime()) || expiryDate.getTime() <= Date.now()) {
+    return {
+      ...subscription,
+      status: 'expired',
+      autoRenewal: false,
+    };
+  }
+
+  return {
+    ...subscription,
+    status: 'active',
+  };
+};
 
 function RootLayoutContent() {
   const colorScheme = useColorScheme();
@@ -53,7 +78,16 @@ function RootLayoutContent() {
 
         const subscription = await getSubscription();
         if (subscription) {
-          dispatch(setSubscription(subscription));
+          const normalized = normalizeSubscription(subscription);
+          dispatch(setSubscription(normalized));
+          if (normalized.status !== subscription.status) {
+            await saveSubscription(normalized);
+          }
+        }
+
+        const transactions = await getPaymentTransactions();
+        if (transactions.length > 0) {
+          dispatch(setTransactions(transactions));
         }
 
         const user = await getUser();
@@ -89,6 +123,10 @@ function RootLayoutContent() {
         <Stack initialRouteName="(tabs)" screenOptions={{ headerShown: false }}>
           <Stack.Screen
             name="payment"
+            options={{}}
+          />
+          <Stack.Screen
+            name="transactions"
             options={{}}
           />
           <Stack.Screen

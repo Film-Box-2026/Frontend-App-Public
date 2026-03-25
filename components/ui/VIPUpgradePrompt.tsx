@@ -1,5 +1,3 @@
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -17,20 +15,20 @@ interface VIPUpgradePromptProps {
   onUpgradePress?: () => void;
 }
 
+const PREMIUM_BENEFITS = [
+  'Xem toàn bộ nội dung 4K',
+  'Không quảng cáo',
+  'Tải offline không giới hạn',
+];
+
 export const VIPUpgradePrompt: React.FC<VIPUpgradePromptProps> = ({
   movieTitle = 'Phim này',
   onUpgradePress,
 }) => {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
 
   const handleUpgrade = () => {
-    if (onUpgradePress) {
-      onUpgradePress();
-    } else {
-      router.push('/subscription');
-    }
+    onUpgradePress?.() ?? router.push('/subscription');
   };
 
   return (
@@ -47,23 +45,15 @@ export const VIPUpgradePrompt: React.FC<VIPUpgradePromptProps> = ({
           </View>
 
           <Text style={styles.title}>Nâng cấp để tiếp tục</Text>
-          <Text style={styles.subtitle}>
-            "{movieTitle}" chỉ có sẵn cho gói Cơ Bản.
-          </Text>
+          <Text style={styles.subtitle}>{`"${movieTitle}" chỉ có sẵn cho gói Premium.`}</Text>
 
           <View style={styles.benefitsContainer}>
-            <View style={styles.benefitItem}>
-              <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-              <Text style={styles.benefitText}>Xem tất cả phim</Text>
-            </View>
-            <View style={styles.benefitItem}>
-              <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-              <Text style={styles.benefitText}>Không quảng cáo</Text>
-            </View>
-            <View style={styles.benefitItem}>
-              <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-              <Text style={styles.benefitText}>Xem Full HD</Text>
-            </View>
+            {PREMIUM_BENEFITS.map((benefit) => (
+              <View key={benefit} style={styles.benefitItem}>
+                <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                <Text style={styles.benefitText}>{benefit}</Text>
+              </View>
+            ))}
           </View>
 
           <Pressable style={styles.upgradeButton} onPress={handleUpgrade}>
