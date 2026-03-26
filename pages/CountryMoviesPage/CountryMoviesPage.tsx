@@ -41,7 +41,6 @@ export const CountryMoviesPage: React.FC<CountryMoviesPageProps> = ({
     sort_field: 'modified.time',
   });
 
-  // Accumulate movies from different pages
   useEffect(() => {
     if (countryMoviesData?.items && countryMoviesData.items.length > 0) {
       if (page === 1) {
@@ -96,7 +95,6 @@ export const CountryMoviesPage: React.FC<CountryMoviesPageProps> = ({
         showBackIcon={true}
         onBackPress={() => router.back()}
         onSearchPress={() => {
-          // Handle search
         }}
         showSearchIcon={false}
       />
