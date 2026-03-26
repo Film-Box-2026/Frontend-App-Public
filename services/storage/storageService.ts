@@ -2,11 +2,19 @@ import { UserSubscription } from '@/constants/subscriptionPlans';
 import { User } from '@/store/slices/Auth/authSlice';
 import { MovieComment } from '@/store/slices/CommentSlice/commentSlice';
 import { HistoryItem } from '@/store/slices/HistorySlice/historySlice';
-import { VIPSubscription } from '@/store/slices/PaymentSlice/paymentSlice';
+import { PaymentTransactionStatus, VIPPlan, VIPSubscription } from '@/store/slices/PaymentSlice/paymentSlice';
 import { RatingItem } from '@/store/slices/RatingSlice/ratingSlice';
 import { ResumePoint } from '@/store/slices/ResumeSlice/resumeSlice';
 import { WatchlistItem } from '@/store/slices/WatchlistSlice/watchlistSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface StoredPaymentTransaction {
+  id: string;
+  amount: number;
+  plan: VIPPlan;
+  status: PaymentTransactionStatus;
+  createdAt: string;
+}
 
 const STORAGE_KEYS = {
   USER: '@film_box_user',
@@ -17,6 +25,7 @@ const STORAGE_KEYS = {
   COMMENTS: '@film_box_comments',
   NOTIFICATION_READ_IDS: '@film_box_notification_read_ids',
   SUBSCRIPTION: '@film_box_subscription',
+  PAYMENT_TRANSACTIONS: '@film_box_payment_transactions',
 };
 
 const memoryStorage: Record<string, string> = {};
@@ -249,6 +258,26 @@ export const getSubscription = async (): Promise<VIPSubscription | null> => {
   } catch (error) {
     console.error('Error getting subscription:', error);
     return null;
+  }
+};
+
+export const savePaymentTransactions = async (
+  transactions: StoredPaymentTransaction[]
+): Promise<void> => {
+  try {
+    await setRawItem(STORAGE_KEYS.PAYMENT_TRANSACTIONS, JSON.stringify(transactions));
+  } catch (error) {
+    console.error('Error saving payment transactions:', error);
+  }
+};
+
+export const getPaymentTransactions = async (): Promise<StoredPaymentTransaction[]> => {
+  try {
+    const raw = await getRawItem(STORAGE_KEYS.PAYMENT_TRANSACTIONS);
+    return raw ? JSON.parse(raw) : [];
+  } catch (error) {
+    console.error('Error getting payment transactions:', error);
+    return [];
   }
 };
 

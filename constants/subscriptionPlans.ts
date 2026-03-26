@@ -1,9 +1,9 @@
-export type PlanId = 'free' | 'basic';
+export type PlanId = 'free' | 'premium';
 
 export const FREE_PLAN_MOVIE_LIMIT = 3;
 export const MOVIE_LIMIT_CONFIG: Record<PlanId, number | null> = {
   'free': FREE_PLAN_MOVIE_LIMIT,
-  'basic': null, // Unlimited
+  'premium': null, // Unlimited
 };
 
 export type Plan = {
@@ -35,18 +35,20 @@ export const SUBSCRIPTION_PLANS: Plan[] = [
     color: '#6B7280',
   },
   {
-    id: 'basic',
-    name: 'Cơ Bản',
-    price: 49000,
+    id: 'premium',
+    name: 'Premium',
+    price: 149000,
     durationLabel: 'tháng',
     features: [
-      'Xem tất cả phim (bao gồm VIP)',
-      'Không quảng cáo',
-      'Full HD',
-      'Tải xuống ngoại tuyến (tối đa 10)',
-      '1 thiết bị cùng lúc',
+      'Xem tất cả phim 4K Dolby Vision',
+      'Không quảng cáo toàn nền tảng',
+      'Âm thanh Dolby Atmos',
+      'Tải xuống ngoại tuyến không giới hạn',
+      'Xem sớm nội dung mới 72 giờ',
+      'Tối đa 6 thiết bị cùng lúc',
+      'Hỗ trợ ưu tiên 24/7',
     ],
-    color: '#3B82F6',
+    color: '#FF7A00',
   },
 ];
 

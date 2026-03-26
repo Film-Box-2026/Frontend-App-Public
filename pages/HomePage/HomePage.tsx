@@ -1,47 +1,39 @@
 import { LoadingPage } from '@/components/LoadingPage';
-import { Header, SearchInput } from '@/components/layout';
+import { Header } from '@/components/layout';
 import { AnimeCarousel } from '@/components/ui/AnimeCarousel';
 import { CategoryCard } from '@/components/ui/CategoryCard';
 import { GenresDrawer } from '@/components/ui/GenresDrawer';
-import { OptionsDrawer } from '@/components/ui/OptionsDrawer';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { MovieBanner } from '@/pages/HomePage/components/MovieBanner';
 import { MovieSlider } from '@/pages/HomePage/components/MovieSlider';
 import {
-  useGetCartoonMovies,
-  useGetCountries,
-  useGetCountryMovies,
-  useGetGenreMovies,
-  useGetGenres,
-  useGetNewMovies,
+    useGetCartoonMovies,
+    useGetCountryMovies,
+    useGetGenreMovies,
+    useGetGenres,
+    useGetNewMovies,
 } from '@/services/api/hooks';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Animated,
-  Dimensions,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    Animated,
+    Dimensions,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const HomePage: React.FC = () => {
   const router = useRouter();
   const [showAllGenres, setShowAllGenres] = useState(false);
-  const [showOptionsDrawer, setShowOptionsDrawer] = useState(false);
-  const [showSearchHeader, setShowSearchHeader] = useState(false);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const slideAnim = useRef(
-    new Animated.Value(Dimensions.get('window').width)
-  ).current;
-
-  const optionsSlideAnim = useRef(
     new Animated.Value(Dimensions.get('window').width)
   ).current;
 
@@ -57,7 +49,6 @@ export const HomePage: React.FC = () => {
     useGetGenreMovies('vien-tuong', { sort_field: 'modified.time' });
   const { data: cartoonMoviesData, isLoading: isLoadingCartoon } =
     useGetCartoonMovies();
-  const { data: countriesData } = useGetCountries();
 
   const formatMovieUrl = (movie: any) => ({
     ...movie,
@@ -103,20 +94,7 @@ export const HomePage: React.FC = () => {
       }).start();
     }
 
-    if (showOptionsDrawer) {
-      Animated.timing(optionsSlideAnim, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(optionsSlideAnim, {
-        toValue: Dimensions.get('window').width,
-        duration: 400,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [showAllGenres, slideAnim, showOptionsDrawer, optionsSlideAnim]);
+  }, [showAllGenres, slideAnim]);
 
   const styles = StyleSheet.create({
     safeContainer: {
@@ -138,7 +116,7 @@ export const HomePage: React.FC = () => {
     },
     scrollContent: {
       gap: 24,
-      paddingBottom: 16,
+      paddingBottom: 100,
     },
     categorySection: {
       paddingHorizontal: 16,
@@ -188,22 +166,21 @@ export const HomePage: React.FC = () => {
       style={styles.safeContainer}
       edges={['bottom', 'left', 'right']}
     >
-      {showSearchHeader && (
-        <SearchInput
-          onMenuPress={() => {}}
-          onSearchPress={() => {}}
-          showSearchHeader={showSearchHeader}
-          onCloseSearch={() => setShowSearchHeader(false)}
-        />
-      )}
-      {!showSearchHeader && (
-        <Header
-          title="Trang chủ"
-          onSearchPress={() => setShowSearchHeader(true)}
-          onMenuPress={() => setShowOptionsDrawer(true)}
-          showMenuIcon={true}
-        />
-      )}
+      <Header
+        variant="overlay"
+        showLogo={true}
+        navItems={['Series', 'TV Shows', 'Cartoons', 'Cinema']}
+        activeNavIndex={-1}
+        title=""
+        showSearchIcon={false}
+        onNavItemPress={(index) => {
+          if (index === 0) router.push('/series');
+          if (index === 1) router.push('/tvshows');
+          if (index === 2) router.push('/cartoon');
+          if (index === 3) router.push('/cinema');
+        }}
+        showMenuIcon={false}
+      />
       <View style={{ flex: 1 }}>
         <ScrollView
           style={styles.container}
@@ -331,14 +308,6 @@ export const HomePage: React.FC = () => {
         slideAnim={slideAnim}
         onClose={() => setShowAllGenres(false)}
         title="Các chủ đề"
-      />
-
-      <OptionsDrawer
-        visible={showOptionsDrawer}
-        countries={countriesData || []}
-        slideAnim={optionsSlideAnim}
-        onClose={() => setShowOptionsDrawer(false)}
-        title="Tuỳ chọn"
       />
     </SafeAreaView>
   );

@@ -225,8 +225,6 @@ export const MovieActionButtons: React.FC<MovieActionButtonsProps> = ({
           </Pressable>
         )}
       </View>
-
-      {/* Watchlist & Rating Buttons */}
       <View style={styles.secondaryButtonsRow}>
         <Pressable
           style={[

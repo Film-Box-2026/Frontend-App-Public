@@ -66,8 +66,6 @@ export const OptionsDrawer: React.FC<OptionsDrawerProps> = ({
   const yearsHeight = useRef(new Animated.Value(1)).current;
   const genresHeight = useRef(new Animated.Value(0)).current;
   const countriesHeight = useRef(new Animated.Value(0)).current;
-
-  // measured content heights (used to create dynamic outputRange values)
   const [measuredYearsHeight, setMeasuredYearsHeight] = useState(0);
   const [measuredGenresHeight, setMeasuredGenresHeight] = useState(0);
   const [measuredCountriesHeight, setMeasuredCountriesHeight] = useState(0);

@@ -1,25 +1,33 @@
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'dark'];
+  const colors = Colors['dark'];
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.tint,
-        tabBarInactiveTintColor: colors.tabIconDefault,
+        tabBarActiveTintColor: '#FFFFFF',
+        tabBarInactiveTintColor: '#8F949B',
         tabBarStyle: {
-          backgroundColor: '#000',
-          borderTopColor: '#2e2d2dff',
+          backgroundColor: '#111317',
+          borderTopColor: 'rgba(255,255,255,0.08)',
+          borderTopWidth: 1,
+          height: 74,
+          paddingTop: 4,
+          paddingBottom: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+        },
+        tabBarItemStyle: {
+          paddingVertical: 2,
         },
         headerShown: false,
         sceneStyle: {
           backgroundColor: colors.background,
-          marginBottom: -50,
         },
       }}
     >
@@ -35,46 +43,35 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="series"
+        name="search"
         options={{
-          title: 'Series',
+          title: 'Search',
           tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="play-circle" size={size} color={color} />
+            <Ionicons name="search" size={size} color={color} />
           ),
-          tabBarLabel: 'Series',
+          tabBarLabel: 'Search',
         }}
       />
 
       <Tabs.Screen
-        name="tvshows"
+        name="my-list"
         options={{
-          title: 'TV Shows',
+          title: 'My List',
           tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="tv" size={size} color={color} />
+            <Ionicons name="bookmark-outline" size={size} color={color} />
           ),
-          tabBarLabel: 'TV Shows',
+          tabBarLabel: 'My List',
         }}
       />
 
       <Tabs.Screen
-        name="cartoon"
+        name="vip"
         options={{
-          title: 'Cartoon',
+          title: 'Subscription',
           tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="color-palette" size={size} color={color} />
+            <Ionicons name="diamond-outline" size={size} color={color} />
           ),
-          tabBarLabel: 'Cartoon',
-        }}
-      />
-
-      <Tabs.Screen
-        name="cinema"
-        options={{
-          title: 'Cinema',
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="film" size={size} color={color} />
-          ),
-          tabBarLabel: 'Cinema',
+          tabBarLabel: 'Subscription',
         }}
       />
 
@@ -86,6 +83,34 @@ export default function TabLayout() {
             <Ionicons name="person" size={size} color={color} />
           ),
           tabBarLabel: 'Profile',
+        }}
+      />
+
+      <Tabs.Screen
+        name="series"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="tvshows"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="cartoon"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="cinema"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

@@ -6,13 +6,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -146,8 +149,14 @@ export const VerifyEmailPage: React.FC = () => {
     container: {
       flex: 1,
       backgroundColor: colors.background,
-      justifyContent: 'center',
       paddingHorizontal: 20,
+    },
+    keyboardWrap: {
+      flex: 1,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
     },
     cardContainer: {
       gap: 24,
@@ -254,14 +263,14 @@ export const VerifyEmailPage: React.FC = () => {
       marginBottom: 20,
       alignSelf: 'flex-start',
     },
-    // debugCodeContainer: {
-    //   marginTop: 20,
-    //   padding: 12,
-    //   borderRadius: 10,
-    //   backgroundColor: 'rgba(255, 193, 7, 0.1)',
-    //   borderWidth: 1,
-    //   borderColor: 'rgba(255, 193, 7, 0.3)',
-    // },
+    debugCodeContainer: {
+      marginTop: 20,
+      padding: 12,
+      borderRadius: 10,
+      backgroundColor: 'rgba(255, 193, 7, 0.1)',
+      borderWidth: 1,
+      borderColor: 'rgba(255, 193, 7, 0.3)',
+    },
     debugCodeLabel: {
       fontSize: 11,
       fontWeight: '600',
@@ -286,7 +295,17 @@ export const VerifyEmailPage: React.FC = () => {
         <Ionicons name="chevron-back" size={24} color={colors.text} />
       </Pressable>
 
-      <View style={styles.cardContainer}>
+      <KeyboardAvoidingView
+        style={styles.keyboardWrap}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.cardContainer}>
         <View style={styles.header}>
           <View style={styles.iconContainer}>
             <Ionicons name="mail" size={40} color={colors.tint} />
@@ -354,7 +373,9 @@ export const VerifyEmailPage: React.FC = () => {
             <Text style={styles.debugCode}>{verifyEmailData.verificationCode}</Text>
           </View>
         )}
-      </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

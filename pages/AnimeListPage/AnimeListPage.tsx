@@ -7,11 +7,11 @@ import { useGetCartoonMovies } from '@/services/api/hooks';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  View,
+    ActivityIndicator,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -80,8 +80,7 @@ export const AnimeListPage: React.FC = () => {
         title="Anime"
         showBackIcon={true}
         onBackPress={() => router.back()}
-        onSearchPress={() => {}}
-        showSearchIcon={false}
+        onSearchPress={() => router.push('/search')}
       />
       <FlatList
         data={allMovies.map(formatMovieUrl)}

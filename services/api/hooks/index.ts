@@ -1,3 +1,4 @@
+export * from './aiSearch';
 export * from './auth';
 export * from './cartoon';
 export * from './country';
@@ -7,3 +8,4 @@ export * from './list';
 export * from './newMovie';
 export * from './search';
 export * from './year';
+

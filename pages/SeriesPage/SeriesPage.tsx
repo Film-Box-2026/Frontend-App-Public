@@ -90,8 +90,7 @@ export const SeriesPage: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Header
         title="Phim Bộ"
-        onSearchPress={() => {}}
-        showSearchIcon={false}
+        onSearchPress={() => router.push('/search')}
       />
       <FlatList
         data={allMovies.map(formatMovieUrl)}

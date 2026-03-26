@@ -1,6 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type VIPPlan = 'free' | 'basic' | 'premium' | 'vip';
+export type PaymentTransactionStatus =
+  | 'pending'
+  | 'success'
+  | 'failed'
+  | 'cancelled'
+  | 'timeout';
 
 export interface VIPSubscription {
   status: 'active' | 'expired' | 'inactive';
@@ -10,11 +16,11 @@ export interface VIPSubscription {
   autoRenewal: boolean;
 }
 
-interface PaymentTransaction {
+export interface PaymentTransaction {
   id: string;
   amount: number;
   plan: VIPPlan;
-  status: 'pending' | 'success' | 'failed';
+  status: PaymentTransactionStatus;
   createdAt: string;
 }
 
@@ -55,9 +61,12 @@ const paymentSlice = createSlice({
     addTransaction: (state, action: PayloadAction<PaymentTransaction>) => {
       state.transactions.push(action.payload);
     },
+    setTransactions: (state, action: PayloadAction<PaymentTransaction[]>) => {
+      state.transactions = action.payload;
+    },
     updateTransactionStatus: (
       state,
-      action: PayloadAction<{ id: string; status: 'pending' | 'success' | 'failed' }>
+      action: PayloadAction<{ id: string; status: PaymentTransactionStatus }>
     ) => {
       const transaction = state.transactions.find((t) => t.id === action.payload.id);
       if (transaction) {
@@ -75,6 +84,7 @@ export const {
   setLoading,
   setError,
   addTransaction,
+  setTransactions,
   updateTransactionStatus,
   clearError,
 } = paymentSlice.actions;

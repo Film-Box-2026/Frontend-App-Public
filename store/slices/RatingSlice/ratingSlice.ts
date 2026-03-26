@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 export interface RatingItem {
   movieId: string;
   slug: string;
-  rating: number; // 1-5 stars
+  rating: number; 
   review?: string;
   ratedAt: string;
 }
