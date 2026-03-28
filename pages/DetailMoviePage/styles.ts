@@ -37,7 +37,7 @@ export const createDetailMovieStyles = (colors: ThemeColors) =>
     },
     headerTitle: {
       flex: 1,
-      marginLeft: 12,
+      marginLeft: 15,
       color: colors.text,
       fontSize: 16,
       fontWeight: '600',
@@ -55,7 +55,7 @@ export const createDetailMovieStyles = (colors: ThemeColors) =>
       paddingBottom: 40,
     },
     posterSection: {
-      height: 0,
+      height: 300,
       backgroundColor: colors.background,
       overflow: 'hidden',
     },
@@ -64,13 +64,13 @@ export const createDetailMovieStyles = (colors: ThemeColors) =>
       height: '100%',
     },
     infoSection: {
-      paddingHorizontal: 16,
+      paddingHorizontal: 19,
       paddingVertical: 20,
       gap: 16,
     },
     titleGroup: {
       gap: 4,
-      maxHeight: 100,
+      maxHeight: 180,
       overflow: 'hidden',
     },
     mainTitle: {

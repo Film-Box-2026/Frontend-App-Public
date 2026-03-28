@@ -1,0 +1,1 @@
+export { WatchShortPage } from './WatchShortPage';

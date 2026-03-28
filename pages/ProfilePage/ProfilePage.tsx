@@ -713,7 +713,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                     {tab === 'profile'
                       ? 'Tổng quan'
                       : tab === 'watchlist'
-                        ? 'Watchlist'
+                        ? 'My List'
                         : 'Lịch sử'}
                   </Text>
                 </Pressable>
@@ -861,7 +861,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                       size={52}
                       color="rgba(255,255,255,0.5)"
                     />
-                    <Text style={styles.emptyText}>Watchlist trống</Text>
+                    <Text style={styles.emptyText}>My List trống</Text>
                     <Text style={styles.emptySubText}>
                       Hãy thêm phim yêu thích vào đây
                     </Text>
