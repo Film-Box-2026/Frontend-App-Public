@@ -5,7 +5,6 @@ import {
     addMovieCommentReply,
     getTotalCommentsCount,
     MovieComment,
-    MovieCommentReply,
     removeMovieComment,
     removeMovieCommentReply,
 } from '@/store/slices/CommentSlice/commentSlice';
@@ -23,13 +22,12 @@ interface DeleteCommentParams {
 
 interface AddReplyParams {
   movieId: string;
-  parentCommentId: string;
+  replyToCommentId: string;
   content: string;
 }
 
 interface DeleteReplyParams {
   movieId: string;
-  parentCommentId: string;
   replyId: string;
 }
 
@@ -40,7 +38,18 @@ export const useMovieComments = () => {
 
   const getMovieComments = useCallback(
     (movieId: string): MovieComment[] => {
-      return commentsByMovieId[movieId] || [];
+      const allComments = commentsByMovieId[movieId] || [];
+      return allComments.filter((c) => !c.parentCommentId);
+    },
+    [commentsByMovieId]
+  );
+
+  const getCommentThread = useCallback(
+    (movieId: string, rootCommentId: string): MovieComment[] => {
+      const allComments = commentsByMovieId[movieId] || [];
+      return allComments.filter(
+        (c) => c.id === rootCommentId || c.parentCommentId === rootCommentId
+      );
     },
     [commentsByMovieId]
   );
@@ -59,11 +68,12 @@ export const useMovieComments = () => {
       const comment: MovieComment = {
         id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
         movieId,
+        parentCommentId: null,
+        replyToCommentId: null,
         userName: user.name,
         userEmail: user.email,
         content: normalizedContent,
         createdAt: new Date().toISOString(),
-        replies: [],
       };
 
       dispatch(addMovieComment(comment));
@@ -89,7 +99,7 @@ export const useMovieComments = () => {
   );
 
   const canDeleteReply = useCallback(
-    (reply: MovieCommentReply): boolean => {
+    (reply: MovieComment): boolean => {
       return !!user && reply.userEmail === user.email;
     },
     [user]
@@ -113,7 +123,9 @@ export const useMovieComments = () => {
 
       const updatedComments = {
         ...commentsByMovieId,
-        [movieId]: currentMovieComments.filter((item) => item.id !== commentId),
+        [movieId]: currentMovieComments.filter(
+          (item) => item.id !== commentId && item.parentCommentId !== commentId
+        ),
       };
       await saveComments(updatedComments);
 
@@ -123,7 +135,7 @@ export const useMovieComments = () => {
   );
 
   const addReply = useCallback(
-    async ({ movieId, parentCommentId, content }: AddReplyParams): Promise<boolean> => {
+    async ({ movieId, replyToCommentId, content }: AddReplyParams): Promise<boolean> => {
       if (!user) {
         return false;
       }
@@ -134,36 +146,32 @@ export const useMovieComments = () => {
       }
 
       const currentMovieComments: MovieComment[] = commentsByMovieId[movieId] || [];
-      const parentComment = currentMovieComments.find((item) => item.id === parentCommentId);
+      const targetComment = currentMovieComments.find(
+        (item) => item.id === replyToCommentId
+      );
 
-      if (!parentComment) {
+      if (!targetComment) {
         return false;
       }
 
-      const reply: MovieCommentReply = {
+      const parentCommentId = targetComment.parentCommentId || targetComment.id;
+
+      const reply: MovieComment = {
         id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
         movieId,
         parentCommentId,
+        replyToCommentId,
         userName: user.name,
         userEmail: user.email,
         content: normalizedContent,
         createdAt: new Date().toISOString(),
       };
 
-      dispatch(addMovieCommentReply({ movieId, parentCommentId, reply }));
+      dispatch(addMovieCommentReply(reply));
 
       const updatedComments = {
         ...commentsByMovieId,
-        [movieId]: currentMovieComments.map((item) => {
-          if (item.id !== parentCommentId) {
-            return item;
-          }
-
-          return {
-            ...item,
-            replies: [...(item.replies || []), reply].slice(0, 50),
-          };
-        }),
+        [movieId]: [reply, ...currentMovieComments].slice(0, 50),
       };
 
       await saveComments(updatedComments);
@@ -173,33 +181,23 @@ export const useMovieComments = () => {
   );
 
   const deleteReply = useCallback(
-    async ({ movieId, parentCommentId, replyId }: DeleteReplyParams): Promise<boolean> => {
+    async ({ movieId, replyId }: DeleteReplyParams): Promise<boolean> => {
       if (!user) {
         return false;
       }
 
       const currentMovieComments: MovieComment[] = commentsByMovieId[movieId] || [];
-      const parentComment = currentMovieComments.find((item) => item.id === parentCommentId);
-      const reply = parentComment?.replies?.find((item) => item.id === replyId);
+      const reply = currentMovieComments.find((item) => item.id === replyId);
 
-      if (!parentComment || !reply || reply.userEmail !== user.email) {
+      if (!reply || reply.userEmail !== user.email) {
         return false;
       }
 
-      dispatch(removeMovieCommentReply({ movieId, parentCommentId, replyId }));
+      dispatch(removeMovieCommentReply({ movieId, replyId }));
 
       const updatedComments = {
         ...commentsByMovieId,
-        [movieId]: currentMovieComments.map((item) => {
-          if (item.id !== parentCommentId) {
-            return item;
-          }
-
-          return {
-            ...item,
-            replies: (item.replies || []).filter((child) => child.id !== replyId),
-          };
-        }),
+        [movieId]: currentMovieComments.filter((item) => item.id !== replyId),
       };
 
       await saveComments(updatedComments);
@@ -217,6 +215,7 @@ export const useMovieComments = () => {
 
   return {
     getMovieComments,
+    getCommentThread,
     addComment,
     addReply,
     canDeleteComment,

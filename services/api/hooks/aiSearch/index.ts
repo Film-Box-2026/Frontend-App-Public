@@ -2,6 +2,7 @@ export {
     useAIChatFollowUp,
     useAIRerankMovies,
     useAIRewriteQuery,
+    useAISearchSignals,
     useAISearchSuggestions,
     useAISemanticIntent
 } from './query';
@@ -12,6 +13,7 @@ export type {
     AIRerankMovieInput,
     AIRerankResult,
     AIRewriteResult,
+    AISearchSignalResult,
     AISemanticIntentResult,
     AISuggestionResult,
     AIUserSignalPayload

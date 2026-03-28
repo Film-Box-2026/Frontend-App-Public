@@ -164,7 +164,7 @@ export const HomePage: React.FC = () => {
   return (
     <SafeAreaView
       style={styles.safeContainer}
-      edges={['bottom', 'left', 'right']}
+      edges={['top', 'bottom', 'left', 'right']}
     >
       <Header
         variant="overlay"

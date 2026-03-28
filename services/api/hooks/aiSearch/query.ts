@@ -5,6 +5,7 @@ import {
     AIRerankMovieInput,
     AIRerankResult,
     AIRewriteResult,
+    AISearchSignalResult,
     AISemanticIntentResult,
     AISuggestionResult,
     AIUserSignalPayload,
@@ -67,6 +68,18 @@ const extractFirstJson = (text: string): string => {
   }
 
   return text.slice(start, end + 1);
+};
+
+const normalizeStringList = (value: unknown, maxItems: number): string[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, maxItems);
 };
 
 const requestGroqJson = async <T>(messages: GroqMessage[], fallback: T): Promise<T> => {
@@ -231,6 +244,65 @@ export const useAISemanticIntent = (
   });
 };
 
+export const useAISearchSignals = (
+  query: string,
+  options?: { enabled?: boolean }
+) => {
+  return useQuery({
+    queryKey: ['ai-search-signals', query],
+    enabled: query.trim().length > 2 && options?.enabled !== false,
+    staleTime: 1000 * 60 * 10,
+    queryFn: async (): Promise<AISearchSignalResult> => {
+      const fallback: AISearchSignalResult = {
+        intentSummary: '',
+        semanticQuery: query,
+        mustHave: [],
+        tones: [],
+        exclusions: [],
+        queryCandidates: [],
+        genreHints: [],
+        countryHints: [],
+      };
+
+      const result = await requestGroqJson<AISearchSignalResult>(
+        [
+          {
+            role: 'system',
+            content:
+              'Ban la bo xu ly semantic search cho app phim. Tu mo ta tu do cua user, hay rut trich y dinh va tin hieu tim kiem. Chi tra ve JSON hop le voi schema: {"intentSummary":"...","semanticQuery":"...","mustHave":["..."],"tones":["..."],"exclusions":["..."],"queryCandidates":["..."],"genreHints":["..."],"countryHints":["..."],"yearHint":"..."}. Quy tac: (1) intentSummary 1 cau ngan (2) semanticQuery gon va tim duoc trong kho phim pho thong (3) queryCandidates toi da 4 item, uu tien ten phim/chu de de tim API (4) mustHave va tones toi da 6 item moi truong (5) neu khong co thong tin thi de mang rong.',
+          },
+          {
+            role: 'user',
+            content: query,
+          },
+        ],
+        fallback
+      );
+
+      return {
+        intentSummary:
+          typeof result.intentSummary === 'string'
+            ? result.intentSummary.trim()
+            : '',
+        semanticQuery:
+          typeof result.semanticQuery === 'string' && result.semanticQuery.trim()
+            ? result.semanticQuery.trim()
+            : query,
+        mustHave: normalizeStringList(result.mustHave, 6),
+        tones: normalizeStringList(result.tones, 6),
+        exclusions: normalizeStringList(result.exclusions, 5),
+        queryCandidates: normalizeStringList(result.queryCandidates, 4),
+        genreHints: normalizeStringList(result.genreHints, 4),
+        countryHints: normalizeStringList(result.countryHints, 4),
+        yearHint:
+          typeof result.yearHint === 'string' && result.yearHint.trim()
+            ? result.yearHint.trim()
+            : undefined,
+      };
+    },
+  });
+};
+
 interface AIRerankPayload {
   query: string;
   movies: AIRerankMovieInput[];
@@ -299,7 +371,7 @@ interface AIChatPayload {
   history: AIChatMessage[];
   context: {
     query: string;
-    movies: Array<{ name: string; slug: string }>;
+    movies: { name: string; slug: string }[];
   };
 }
 

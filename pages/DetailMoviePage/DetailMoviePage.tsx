@@ -10,7 +10,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useGetDetailMovie, useGetListMovies } from '@/services/api/hooks';
 import { upsertHistoryItem } from '@/services/storage/storageService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { MovieCommentReply } from '@/store/slices/CommentSlice/commentSlice';
+import { MovieComment } from '@/store/slices/CommentSlice/commentSlice';
 import { addToHistory } from '@/store/slices/HistorySlice/historySlice';
 import { checkMovieAccessibility } from '@/utils/subscriptionUtils';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,7 +29,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { VideoPlayerModal } from './components';
 import { createDetailMovieStyles } from './styles';
 
@@ -42,7 +42,6 @@ interface Episode {
 }
 
 export const DetailMoviePage: React.FC = () => {
-  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
   const router = useRouter();
@@ -79,6 +78,7 @@ export const DetailMoviePage: React.FC = () => {
   });
   const {
     getMovieComments,
+    getCommentThread,
     getMovieCommentsCount,
     addComment,
     addReply,
@@ -306,6 +306,7 @@ export const DetailMoviePage: React.FC = () => {
       });
     }
   }, [requireAuth, canAccessMovieBySubscription, resumeHook, episodes.length, findEpisodePositionBySlug, getEpisodeByIndexes, openEpisodePlayer]);
+  
   useFocusEffect(
     useCallback(() => {
       return () => {
@@ -461,12 +462,13 @@ export const DetailMoviePage: React.FC = () => {
     ]);
   };
 
-  const handleReplyPress = (commentId: string) => {
+  const handleReplyPress = (commentId: string, isReplyToReply: boolean = false) => {
     if (!requireAuth()) {
       return;
     }
 
-    setActiveReplyCommentId((prev) => (prev === commentId ? null : commentId));
+    const key = isReplyToReply ? `reply_${commentId}` : commentId;
+    setActiveReplyCommentId((prev) => (prev === key ? null : key));
   };
 
   const handleReplyTextChange = (commentId: string, value: string) => {
@@ -476,12 +478,12 @@ export const DetailMoviePage: React.FC = () => {
     }));
   };
 
-  const handleSubmitReply = async (parentCommentId: string) => {
+  const handleSubmitReply = async (replyToCommentId: string) => {
     if (!requireAuth() || !movieData) {
       return;
     }
 
-    const rawReply = replyTextByCommentId[parentCommentId] || '';
+    const rawReply = replyTextByCommentId[replyToCommentId] || '';
     const normalizedReply = rawReply.trim();
     if (!normalizedReply) {
       Alert.alert('Thiếu nội dung', 'Vui lòng nhập phản hồi trước khi gửi.');
@@ -490,12 +492,12 @@ export const DetailMoviePage: React.FC = () => {
 
     const isSaved = await addReply({
       movieId: movieData._id,
-      parentCommentId,
+      replyToCommentId,
       content: normalizedReply,
     });
 
     if (isSaved) {
-      setReplyTextByCommentId((prev) => ({ ...prev, [parentCommentId]: '' }));
+      setReplyTextByCommentId((prev) => ({ ...prev, [replyToCommentId]: '' }));
       setActiveReplyCommentId(null);
       return;
     }
@@ -503,7 +505,7 @@ export const DetailMoviePage: React.FC = () => {
     Alert.alert('Lỗi', 'Không thể gửi phản hồi lúc này.');
   };
 
-  const handleDeleteReply = async (parentCommentId: string, replyId: string) => {
+  const handleDeleteReply = async (replyId: string) => {
     if (!movieData) {
       return;
     }
@@ -516,7 +518,6 @@ export const DetailMoviePage: React.FC = () => {
         onPress: async () => {
           const isDeleted = await deleteReply({
             movieId: movieData._id,
-            parentCommentId,
             replyId,
           });
 
@@ -528,25 +529,79 @@ export const DetailMoviePage: React.FC = () => {
     ]);
   };
 
-  const renderReplyItem = (parentCommentId: string, reply: MovieCommentReply) => (
-    <View key={reply.id} style={styles.replyItem}>
-      <View style={styles.commentHeader}>
-        <Text style={styles.commentUserName}>{reply.userName}</Text>
-        <View style={styles.commentMeta}>
-          <Text style={styles.commentTime}>{formatCommentTime(reply.createdAt)}</Text>
-          {canDeleteReply(reply) && (
-            <Pressable
-              style={styles.deleteCommentButton}
-              onPress={() => handleDeleteReply(parentCommentId, reply.id)}
-            >
-              <Text style={styles.deleteCommentText}>Xóa</Text>
-            </Pressable>
-          )}
+  const renderReplyItem = (reply: MovieComment, rootCommentId: string) => {
+    const allReplies = movieData ? getCommentThread(movieData._id, rootCommentId) : [];
+    const targetComment = reply.replyToCommentId && reply.replyToCommentId !== rootCommentId
+      ? allReplies.find((c) => c.id === reply.replyToCommentId)
+      : null;
+    const replyKey = `reply_${reply.id}`;
+    const showReplyInput = activeReplyCommentId === replyKey && isAuthenticated;
+
+    return (
+      <View key={reply.id}>
+        <View style={styles.replyItem}>
+          <View style={styles.commentHeader}>
+            <Text style={styles.commentUserName}>{reply.userName}</Text>
+            <View style={styles.commentMeta}>
+              <Text style={styles.commentTime}>{formatCommentTime(reply.createdAt)}</Text>
+              {canDeleteReply(reply) && (
+                <Pressable
+                  style={styles.deleteCommentButton}
+                  onPress={() => handleDeleteReply(reply.id)}
+                >
+                  <Text style={styles.deleteCommentText}>Xóa</Text>
+                </Pressable>
+              )}
+              <Pressable
+                style={styles.replyActionButton}
+                onPress={() => handleReplyPress(reply.id, true)}
+              >
+                <Text style={styles.replyActionText}>Phản hồi</Text>
+              </Pressable>
+            </View>
+          </View>
+          <Text style={styles.commentContent}>
+            {targetComment && `@${targetComment.userName} `}
+            {reply.content}
+          </Text>
         </View>
+        {showReplyInput && (
+          <View style={styles.replyInputWrapper}>
+            <TextInput
+              style={styles.replyInput}
+              placeholder="Viết phản hồi..."
+              placeholderTextColor={colors.tabIconDefault}
+              value={replyTextByCommentId[reply.id] || ''}
+              onChangeText={(value) => handleReplyTextChange(reply.id, value)}
+              onFocus={handleReplyInputFocus}
+              multiline
+              maxLength={300}
+            />
+            <View style={styles.replyActionsRow}>
+              <Pressable
+                style={styles.replyCancelButton}
+                onPress={() => {
+                  setActiveReplyCommentId(null);
+                  setReplyTextByCommentId((prev) => ({
+                    ...prev,
+                    [reply.id]: '',
+                  }));
+                }}
+              >
+                <Text style={styles.replyCancelText}>Hủy</Text>
+              </Pressable>
+              <Pressable
+                style={styles.submitCommentButton}
+                onPress={() => handleSubmitReply(reply.id)}
+              >
+                <Text style={styles.submitCommentText}>Gửi</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
       </View>
-      <Text style={styles.commentContent}>{reply.content}</Text>
-    </View>
-  );
+    );
+  };
 
   if (isLoading || !formattedMovieData) {
     return <LoadingPage message="Đang tải chi tiết phim..." />;
@@ -555,7 +610,13 @@ export const DetailMoviePage: React.FC = () => {
   const handleCommentInputFocus = () => {
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 420);
+    }, 100);
+  };
+
+  const handleReplyInputFocus = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 300);
   };
 
   const handleScrollViewTouchStart = () => {
@@ -563,51 +624,55 @@ export const DetailMoviePage: React.FC = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <SafeAreaView
       style={styles.safeContainer}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 12 : 0}
+      edges={['top', 'bottom', 'left', 'right']}
     >
-      <SafeAreaView
-        style={styles.safeContainer}
-        edges={['bottom', 'left', 'right']}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={0}
       >
         <Animated.View
-        style={[
-          styles.headerBackdrop,
-          {
-            backgroundColor: headerBackgroundOpacity.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['rgba(0, 0, 0, 0)', colors.background],
-            }),
-            marginTop: 0,
-          },
-        ]}
-      >
-        <View style={styles.headerContent}>
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={24} color={colors.text} />
-          </Pressable>
-          <Animated.Text style={[styles.headerTitle]} numberOfLines={1}>
-            {formattedMovieData.name}
-          </Animated.Text>
-        </View>
-      </Animated.View>
+          style={[
+            styles.headerBackdrop,
+            {
+              backgroundColor: headerBackgroundOpacity.interpolate({
+                inputRange: [0, 1],
+                outputRange: [colors.background, colors.background],
+              }),
+              position: 'relative',
+              marginBottom: 0,
+            },
+          ]}
+        >
+          <View style={styles.headerContent}>
+            <Pressable style={styles.backButton} onPress={() => router.back()}>
+              <Ionicons name="chevron-back" size={24} color={colors.text} />
+            </Pressable>
+            <Animated.Text style={[styles.headerTitle]} numberOfLines={1}>
+              {formattedMovieData.name}
+            </Animated.Text>
+          </View>
+        </Animated.View>
 
-      <Animated.ScrollView
-        ref={scrollViewRef}
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
-        scrollEventThrottle={16}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
-        )}
-        onTouchStart={handleScrollViewTouchStart}
-        showsVerticalScrollIndicator={false}
-      >
+        <Animated.ScrollView
+          ref={scrollViewRef}
+          style={styles.container}
+          contentContainerStyle={{
+            paddingBottom: 100,
+            paddingHorizontal: 0,
+          }}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={false}
+          scrollEventThrottle={16}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false }
+          )}
+          onTouchStart={handleScrollViewTouchStart}
+          showsVerticalScrollIndicator={false}
+        >
         <View style={styles.posterSection}>
           <ExpoImage
             source={{ uri: formattedMovieData.poster_url }}
@@ -619,8 +684,18 @@ export const DetailMoviePage: React.FC = () => {
 
         <View style={styles.infoSection}>
           <View style={styles.titleGroup}>
-            <Text style={styles.mainTitle}>{formattedMovieData.name}</Text>
-            <Text style={styles.originTitle}>
+            <Text 
+              style={styles.mainTitle}
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
+              {formattedMovieData.name}
+            </Text>
+            <Text 
+              style={styles.originTitle}
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
               {formattedMovieData.origin_name}
             </Text>
           </View>
@@ -864,15 +939,15 @@ export const DetailMoviePage: React.FC = () => {
                   </View>
                   <Text style={styles.commentContent}>{comment.content}</Text>
 
-                  {(comment.replies || []).length > 0 && (
+                  {movieData && (
                     <View style={styles.repliesList}>
-                      {(comment.replies || []).map((reply) =>
-                        renderReplyItem(comment.id, reply)
-                      )}
+                      {getCommentThread(movieData._id, comment.id)
+                        .filter((c) => c.id !== comment.id)
+                        .map((reply) => renderReplyItem(reply, comment.id))}
                     </View>
                   )}
 
-                  {activeReplyCommentId === comment.id && (
+                  {activeReplyCommentId === comment.id && isAuthenticated && (
                     <View style={styles.replyInputWrapper}>
                       <TextInput
                         style={styles.replyInput}
@@ -880,6 +955,7 @@ export const DetailMoviePage: React.FC = () => {
                         placeholderTextColor={colors.tabIconDefault}
                         value={replyTextByCommentId[comment.id] || ''}
                         onChangeText={(value) => handleReplyTextChange(comment.id, value)}
+                        onFocus={handleReplyInputFocus}
                         multiline
                         maxLength={300}
                       />
@@ -922,7 +998,7 @@ export const DetailMoviePage: React.FC = () => {
         onClose={handleClosePlayer}
         onProgress={handlePlaybackProgress}
       />
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };

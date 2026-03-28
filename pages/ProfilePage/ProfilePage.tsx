@@ -83,7 +83,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             await clearAllData();
             dispatch(logout());
             router.replace('/login');
-          } catch (error) {
+          } catch {
             Alert.alert('Lỗi', 'Không thể đăng xuất');
             setLoggingOut(false);
           }
@@ -576,7 +576,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>Chưa đăng nhập</Text>
         </View>
@@ -585,7 +585,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <View style={styles.topGlowWrap}>
         <LinearGradient
           colors={['rgba(68,124,209,0.45)', 'rgba(26,34,55,0)']}

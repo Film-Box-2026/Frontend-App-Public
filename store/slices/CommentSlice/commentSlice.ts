@@ -1,24 +1,17 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface MovieCommentReply {
+export interface MovieComment {
   id: string;
   movieId: string;
-  parentCommentId: string;
+  parentCommentId: string | null; // thread gốc
+  replyToCommentId: string | null; // direct reply target
   userName: string;
   userEmail: string;
   content: string;
   createdAt: string;
 }
 
-export interface MovieComment {
-  id: string;
-  movieId: string;
-  userName: string;
-  userEmail: string;
-  content: string;
-  createdAt: string;
-  replies: MovieCommentReply[];
-}
+export interface MovieCommentReply extends MovieComment {} // alias for compatibility
 
 export interface CommentsState {
   itemsByMovieId: Record<string, MovieComment[]>;
@@ -36,7 +29,8 @@ const normalizeCommentsByMovieId = (
   Object.entries(commentsByMovieId || {}).forEach(([movieId, comments]) => {
     normalized[movieId] = (comments || []).map((comment) => ({
       ...comment,
-      replies: comment.replies || [],
+      parentCommentId: comment.parentCommentId || null,
+      replyToCommentId: comment.replyToCommentId || null,
     }));
   });
 
@@ -44,10 +38,7 @@ const normalizeCommentsByMovieId = (
 };
 
 export const getTotalCommentsCount = (comments: MovieComment[]): number => {
-  return comments.reduce(
-    (total, comment) => total + 1 + (comment.replies?.length || 0),
-    0
-  );
+  return comments.filter((c) => !c.parentCommentId).length;
 };
 
 const commentSlice = createSlice({
@@ -57,13 +48,11 @@ const commentSlice = createSlice({
     addMovieComment: (state, action: PayloadAction<MovieComment>) => {
       const comment = {
         ...action.payload,
-        replies: action.payload.replies || [],
+        parentCommentId: null,
+        replyToCommentId: null,
       };
       const movieComments = state.itemsByMovieId[comment.movieId] || [];
-      state.itemsByMovieId[comment.movieId] = [comment, ...movieComments].slice(
-        0,
-        50
-      );
+      state.itemsByMovieId[comment.movieId] = [comment, ...movieComments].slice(0, 50);
     },
     setComments: (state, action: PayloadAction<Record<string, MovieComment[]>>) => {
       state.itemsByMovieId = normalizeCommentsByMovieId(action.payload);
@@ -75,44 +64,26 @@ const commentSlice = createSlice({
       const { movieId, commentId } = action.payload;
       const movieComments = state.itemsByMovieId[movieId] || [];
       state.itemsByMovieId[movieId] = movieComments.filter(
-        (comment) => comment.id !== commentId
+        (comment) => comment.id !== commentId && comment.parentCommentId !== commentId
       );
     },
     addMovieCommentReply: (
       state,
-      action: PayloadAction<{ movieId: string; parentCommentId: string; reply: MovieCommentReply }>
+      action: PayloadAction<MovieComment>
     ) => {
-      const { movieId, parentCommentId, reply } = action.payload;
-      const movieComments = state.itemsByMovieId[movieId] || [];
-
-      state.itemsByMovieId[movieId] = movieComments.map((comment) => {
-        if (comment.id !== parentCommentId) {
-          return comment;
-        }
-
-        return {
-          ...comment,
-          replies: [...(comment.replies || []), reply].slice(0, 50),
-        };
-      });
+      const reply = action.payload;
+      const movieComments = state.itemsByMovieId[reply.movieId] || [];
+      state.itemsByMovieId[reply.movieId] = [reply, ...movieComments].slice(0, 50);
     },
     removeMovieCommentReply: (
       state,
-      action: PayloadAction<{ movieId: string; parentCommentId: string; replyId: string }>
+      action: PayloadAction<{ movieId: string; replyId: string }>
     ) => {
-      const { movieId, parentCommentId, replyId } = action.payload;
+      const { movieId, replyId } = action.payload;
       const movieComments = state.itemsByMovieId[movieId] || [];
-
-      state.itemsByMovieId[movieId] = movieComments.map((comment) => {
-        if (comment.id !== parentCommentId) {
-          return comment;
-        }
-
-        return {
-          ...comment,
-          replies: (comment.replies || []).filter((reply) => reply.id !== replyId),
-        };
-      });
+      state.itemsByMovieId[movieId] = movieComments.filter(
+        (comment) => comment.id !== replyId
+      );
     },
     clearComments: (state) => {
       state.itemsByMovieId = {};

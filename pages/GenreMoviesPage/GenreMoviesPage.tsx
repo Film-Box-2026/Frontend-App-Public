@@ -86,7 +86,7 @@ export const GenreMoviesPage: React.FC<GenreMoviesPageProps> = ({
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <Header
         title={title}
         showBackIcon={true}

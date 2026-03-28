@@ -90,7 +90,7 @@ export const YearMoviesPage: React.FC<YearMoviesPageProps> = ({
   if (isLoading && page === 1) return <LoadingPage />;
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <Header
         title={`${title}`}
         showBackIcon={true}

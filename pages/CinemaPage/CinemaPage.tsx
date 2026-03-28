@@ -87,7 +87,7 @@ export const CinemaPage: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <Header
         title="Phim Lẻ"
         showSearchIcon={false}

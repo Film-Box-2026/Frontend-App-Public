@@ -88,7 +88,7 @@ export const CountryMoviesPage: React.FC<CountryMoviesPageProps> = ({
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <Header
         title={title}
         showBackIcon={true}
