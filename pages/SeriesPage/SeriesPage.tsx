@@ -91,7 +91,7 @@ export const SeriesPage: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <Header
-        title="Phim Bộ"
+        title="Series"
         onSearchPress={() => router.push('/search')}
       />
       <FlatList

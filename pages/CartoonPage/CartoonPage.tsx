@@ -87,7 +87,7 @@ export const CartoonPage: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <Header
-        title="Cartoon"
+        title="Cartoons"
         onSearchPress={() => router.push('/search')}
       />
       <FlatList

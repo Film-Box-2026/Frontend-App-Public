@@ -89,7 +89,7 @@ export const CinemaPage: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <Header
-        title="Phim Lẻ"
+        title="Cinemas"
         showSearchIcon={false}
       />
       <FlatList

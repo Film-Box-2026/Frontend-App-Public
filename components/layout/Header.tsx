@@ -3,7 +3,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 interface HeaderProps {
   title?: string;
@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
       alignItems: 'center',
       gap: 19,
       paddingLeft: 4,
-      flexShrink: 1,
+      paddingRight: 20, // Thêm padding cuối để kéo đến item cuối có khoảng thở
     },
     navItemText: {
       fontSize: 19,
@@ -115,7 +115,12 @@ export const Header: React.FC<HeaderProps> = ({
         )}
 
         {navItems?.length ? (
-          <View style={styles.navItemsWrap}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.navItemsWrap}
+            style={{ flex: 1 }}
+          >
             {navItems.map((item, index) => (
               <Pressable key={`${item}-${index}`} onPress={() => onNavItemPress?.(index)}>
                 <Text
@@ -129,7 +134,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </Text>
               </Pressable>
             ))}
-          </View>
+          </ScrollView>
         ) : (
           <Text style={styles.titleText}>{title}</Text>
         )}

@@ -1,4 +1,5 @@
 import { Image as ExpoImage } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -25,24 +26,6 @@ export const CartoonMovieCard: React.FC<CartoonMovieCardProps> = ({
 }) => {
   const router = useRouter();
 
-  const truncateMovieName = (value: string, maxWords = 2, maxChars = 24) => {
-    if (!value) return '';
-
-    const normalized = value.replace(/\s+/g, ' ').trim();
-    if (!normalized) return '';
-
-    const words = normalized.split(' ');
-    if (words.length > maxWords) {
-      return `${words.slice(0, maxWords).join(' ')} ...`;
-    }
-
-    if (normalized.length > maxChars) {
-      return `${normalized.slice(0, maxChars).trim()} ...`;
-    }
-
-    return normalized;
-  };
-
   const styles = StyleSheet.create({
     movieCard: {
       width: width || '48%',
@@ -63,7 +46,6 @@ export const CartoonMovieCard: React.FC<CartoonMovieCardProps> = ({
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.3)',
       justifyContent: 'flex-end',
       padding: 8,
     },
@@ -117,7 +99,11 @@ export const CartoonMovieCard: React.FC<CartoonMovieCardProps> = ({
         contentFit="cover"
         cachePolicy="memory-disk"
       />
-      <View style={styles.movieOverlay}>
+      <LinearGradient
+        colors={['transparent', 'rgba(0, 0, 0, 0.4)', 'rgba(0, 0, 0, 0.95)']}
+        locations={[0, 0.5, 1]}
+        style={styles.movieOverlay}
+      >
         {(movie.quality || movie.episode_current) && (
           <View style={styles.movieBadges}>
             {movie.quality && (
@@ -138,12 +124,12 @@ export const CartoonMovieCard: React.FC<CartoonMovieCardProps> = ({
           </View>
         )}
         <Text style={styles.movieTitle} numberOfLines={2}>
-          {truncateMovieName(movie.name, 2, 24)}
+          {movie.name}
         </Text>
         <Text style={styles.movieSubtitle} numberOfLines={1}>
-          {truncateMovieName(movie.origin_name || `${movie.year || ''}`, 3, 28)}
+          {movie.origin_name || `${movie.year || ''}`}
         </Text>
-      </View>
+      </LinearGradient>
     </Pressable>
   );
 };
