@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/expo/expo/main/docs/public/static/images/expo-logo.png" width="80" alt="Expo Logo"/>
+  <img src="https://avatars.githubusercontent.com/u/12504344?v=4" width="80" alt="Expo Logo" style="border-radius: 20%;" />
 </p>
 
 <h1 align="center">🎬 FilmBox - Dịch vụ Streaming Điện Ảnh</h1>
