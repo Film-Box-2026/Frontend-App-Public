@@ -13,6 +13,18 @@ export interface AISemanticIntentResult {
   relatedQueries?: string[];
 }
 
+export interface AISearchSignalResult {
+  intentSummary: string;
+  semanticQuery: string;
+  mustHave: string[];
+  tones: string[];
+  exclusions: string[];
+  queryCandidates: string[];
+  genreHints: string[];
+  countryHints: string[];
+  yearHint?: string;
+}
+
 export interface AIRerankMovieInput {
   slug: string;
   name: string;
@@ -29,7 +41,7 @@ export interface AIRerankResult {
 export interface AIUserSignalPayload {
   watchlist: string[];
   history: string[];
-  ratings: Array<{ movieId: string; rating: number }>;
+  ratings: { movieId: string; rating: number }[];
 }
 
 export interface AIChatMessage {

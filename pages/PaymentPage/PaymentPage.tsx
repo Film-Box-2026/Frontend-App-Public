@@ -3,17 +3,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    FlatList,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -22,17 +22,17 @@ import { formatPrice, VIP_PACKAGES, VIPPackage } from '@/constants/vipPackages';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { vnpayService } from '@/services/api/vnpay';
 import {
-  getPaymentTransactions,
-  savePaymentTransactions,
-  saveSubscription,
+    getPaymentTransactions,
+    savePaymentTransactions,
+    saveSubscription,
 } from '@/services/storage/storageService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
-  addTransaction,
-  PaymentTransaction,
-  setError,
-  setLoading,
-  setSubscription,
+    addTransaction,
+    PaymentTransaction,
+    setError,
+    setLoading,
+    setSubscription,
 } from '@/store/slices/PaymentSlice/paymentSlice';
 
 type PaymentStep = 'idle' | 'confirm' | 'processing' | 'result';
@@ -889,7 +889,7 @@ export const PaymentPage: React.FC = () => {
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Pressable

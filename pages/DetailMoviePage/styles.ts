@@ -14,15 +14,13 @@ export const createDetailMovieStyles = (colors: ThemeColors) =>
       backgroundColor: colors.background,
     },
     headerBackdrop: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
       height: 60,
       backgroundColor: 'transparent',
-      zIndex: 10,
       justifyContent: 'center',
+      alignItems: 'center',
       paddingHorizontal: 16,
+      borderBottomWidth: 0,
+      zIndex: 10,
     },
     headerContent: {
       flexDirection: 'row',
@@ -39,7 +37,7 @@ export const createDetailMovieStyles = (colors: ThemeColors) =>
     },
     headerTitle: {
       flex: 1,
-      marginLeft: 12,
+      marginLeft: 15,
       color: colors.text,
       fontSize: 16,
       fontWeight: '600',
@@ -54,9 +52,10 @@ export const createDetailMovieStyles = (colors: ThemeColors) =>
     },
     scrollContent: {
       paddingTop: 0,
+      paddingBottom: 40,
     },
     posterSection: {
-      height: 350,
+      height: 300,
       backgroundColor: colors.background,
       overflow: 'hidden',
     },
@@ -65,21 +64,25 @@ export const createDetailMovieStyles = (colors: ThemeColors) =>
       height: '100%',
     },
     infoSection: {
-      paddingHorizontal: 16,
+      paddingHorizontal: 19,
       paddingVertical: 20,
       gap: 16,
     },
     titleGroup: {
       gap: 4,
+      maxHeight: 180,
+      overflow: 'hidden',
     },
     mainTitle: {
       fontSize: 24,
       fontWeight: '700',
       color: colors.text,
+      lineHeight: 32,
     },
     originTitle: {
       fontSize: 14,
       color: colors.tabIconDefault,
+      lineHeight: 20,
     },
     metaInfo: {
       flexDirection: 'row',
@@ -350,11 +353,7 @@ export const createDetailMovieStyles = (colors: ThemeColors) =>
     },
     repliesList: {
       gap: 8,
-      marginTop: 4,
-      marginLeft: 12,
-      paddingLeft: 10,
-      borderLeftWidth: 1,
-      borderLeftColor: 'rgba(255, 255, 255, 0.12)',
+      marginTop: 12,
     },
     replyItem: {
       borderRadius: 8,
@@ -377,6 +376,7 @@ export const createDetailMovieStyles = (colors: ThemeColors) =>
     },
     replyInputWrapper: {
       marginTop: 6,
+      marginBottom: 16,
       borderRadius: 8,
       padding: 10,
       gap: 8,

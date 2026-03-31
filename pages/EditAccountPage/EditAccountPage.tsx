@@ -230,7 +230,7 @@ export const EditAccountPage: React.FC = () => {
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <Header
         title="Chỉnh sửa tài khoản"
         onSearchPress={() => router.push('/search')}

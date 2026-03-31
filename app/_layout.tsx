@@ -6,9 +6,7 @@ import {
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
 import 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { RootProvider } from '@/providers/RootProvider';
@@ -59,7 +57,6 @@ const normalizeSubscription = (subscription: VIPSubscription): VIPSubscription =
 
 function RootLayoutContent() {
   const colorScheme = useColorScheme();
-  const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const [isReady, setIsReady] = useState(false);
 
@@ -119,73 +116,75 @@ function RootLayoutContent() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <View style={{ flex: 1, paddingTop: insets.top }}>
-        <Stack initialRouteName="(tabs)" screenOptions={{ headerShown: false }}>
-          <Stack.Screen
-            name="payment"
-            options={{}}
-          />
-          <Stack.Screen
-            name="transactions"
-            options={{}}
-          />
-          <Stack.Screen
-            name="subscription"
-            options={{}}
-          />
-          <Stack.Screen
-            name="(tabs)"
-            options={{}}
-          />
-          <Stack.Screen
-            name="detail"
-            options={{}}
-          />
-          <Stack.Screen
-            name="search"
-            options={{}}
-          />
-          <Stack.Screen
-            name="korea-movies"
-            options={{}}
-          />
-          <Stack.Screen
-            name="america-movies"
-            options={{}}
-          />
-          <Stack.Screen
-            name="vietnam-movies"
-            options={{}}
-          />
-          <Stack.Screen
-            name="anime-list"
-            options={{}}
-          />
-          <Stack.Screen
-            name="genre-movies"
-            options={{}}
-          />
-          <Stack.Screen
-            name="year-movies"
-            options={{}}
-          />
-          <Stack.Screen
-            name="country-movies"
-            options={{}}
-          />
-          <Stack.Screen
-            name="login"
-            options={{}}
-          />
-          <Stack.Screen
-            name="signup"
-            options={{
-              animation: 'slide_from_right',
-            }}
-          />
-        </Stack>
-      </View>
-      <StatusBar style="auto" />
+      <Stack initialRouteName="(tabs)" screenOptions={{ headerShown: false }}>
+        <Stack.Screen
+          name="payment"
+          options={{}}
+        />
+        <Stack.Screen
+          name="transactions"
+          options={{}}
+        />
+        <Stack.Screen
+          name="subscription"
+          options={{}}
+        />
+        <Stack.Screen
+          name="(tabs)"
+          options={{}}
+        />
+        <Stack.Screen
+          name="detail"
+          options={{}}
+        />
+        <Stack.Screen
+          name="search"
+          options={{}}
+        />
+        <Stack.Screen
+          name="korea-movies"
+          options={{}}
+        />
+        <Stack.Screen
+          name="america-movies"
+          options={{}}
+        />
+        <Stack.Screen
+          name="vietnam-movies"
+          options={{}}
+        />
+        <Stack.Screen
+          name="anime-list"
+          options={{}}
+        />
+        <Stack.Screen
+          name="genre-movies"
+          options={{}}
+        />
+        <Stack.Screen
+          name="year-movies"
+          options={{}}
+        />
+        <Stack.Screen
+          name="country-movies"
+          options={{}}
+        />
+        <Stack.Screen
+          name="login"
+          options={{}}
+        />
+        <Stack.Screen
+          name="signup"
+          options={{
+            animation: 'slide_from_right',
+          }}
+        />
+      </Stack>
+      <StatusBar
+        style={colorScheme === 'dark' ? 'light' : 'dark'}
+        hidden={false}
+        translucent={false}
+      />
     </ThemeProvider>
   );
 }

@@ -425,7 +425,7 @@ export const SubscriptionScreen: React.FC = () => {
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Đăng ký</Text>
         <Text style={styles.headerSubtitle}>

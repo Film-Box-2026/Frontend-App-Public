@@ -286,7 +286,7 @@ export const VerifyEmailPage: React.FC = () => {
   });
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
       <Pressable
         style={styles.backButton}
         onPress={() => router.back()}

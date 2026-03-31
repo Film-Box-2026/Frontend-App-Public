@@ -56,11 +56,11 @@ export default function TabLayout() {
       <Tabs.Screen
         name="my-list"
         options={{
-          title: 'My List',
+          title: 'Watch Short',
           tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="bookmark-outline" size={size} color={color} />
+            <Ionicons name="play-circle-outline" size={size} color={color} />
           ),
-          tabBarLabel: 'My List',
+          tabBarLabel: 'Watch Short',
         }}
       />
 

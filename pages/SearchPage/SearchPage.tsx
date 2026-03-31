@@ -4,6 +4,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import {
     useAIRerankMovies,
     useAIRewriteQuery,
+    useAISearchSignals,
     useAISemanticIntent,
     useGetCountries,
     useGetGenres,
@@ -12,7 +13,7 @@ import {
 import { useAppSelector } from '@/store/hooks';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
@@ -47,8 +48,8 @@ export const SearchPage: React.FC = () => {
   const { data: genresData } = useGetGenres();
   const { data: countriesData } = useGetCountries();
 
-  const genres = Array.isArray(genresData) ? genresData : [];
-  const countries = Array.isArray(countriesData) ? countriesData : [];
+  const genres = useMemo(() => (Array.isArray(genresData) ? genresData : []), [genresData]);
+  const countries = useMemo(() => (Array.isArray(countriesData) ? countriesData : []), [countriesData]);
 
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -91,6 +92,11 @@ export const SearchPage: React.FC = () => {
 
   const { data: aiSemanticData, isFetching: isInferringSemantic } =
     useAISemanticIntent(debouncedQuery, {
+      enabled: isAIMode && debouncedQuery.length > 2,
+    });
+
+  const { data: aiSignalData, isFetching: isInferringSignals } =
+    useAISearchSignals(debouncedQuery, {
       enabled: isAIMode && debouncedQuery.length > 2,
     });
 
@@ -270,12 +276,23 @@ export const SearchPage: React.FC = () => {
         .filter(Boolean)
     );
 
-    return (aiSemanticData?.relatedQueries || [])
+    const combined = [
+      ...(aiSignalData?.queryCandidates || []),
+      ...(aiSemanticData?.relatedQueries || []),
+    ];
+
+    return combined
       .map((item: string) => item.trim())
       .filter(Boolean)
       .filter((item: string) => !base.has(item.toLowerCase()))
-      .slice(0, 2);
-  }, [aiSemanticData?.relatedQueries, baseKeyword, effectiveKeyword, isAIMode]);
+      .slice(0, 3);
+  }, [
+    aiSemanticData?.relatedQueries,
+    aiSignalData?.queryCandidates,
+    baseKeyword,
+    effectiveKeyword,
+    isAIMode,
+  ]);
 
   const { data: relatedSearchResults1, isLoading: isLoadingRelated1 } =
     useSearchMovies(
@@ -309,15 +326,123 @@ export const SearchPage: React.FC = () => {
       }
     );
 
-  const relatedMovies1 = relatedSearchResults1?.data?.items?.map(formatMovieUrl) || [];
-  const relatedMovies2 = relatedSearchResults2?.data?.items?.map(formatMovieUrl) || [];
+  const { data: relatedSearchResults3, isLoading: isLoadingRelated3 } =
+    useSearchMovies(
+      {
+        keyword: relatedQueries[2] || '',
+        page: 1,
+        limit: 18,
+        sort_field: 'modified.time',
+        category: selectedGenre || undefined,
+        country: selectedCountry || undefined,
+        year: selectedYear || undefined,
+      },
+      {
+        enabled: isAIMode && Boolean(relatedQueries[2]),
+      }
+    );
+
+  const relatedMovies1 = useMemo(
+    () => relatedSearchResults1?.data?.items?.map(formatMovieUrl) || [],
+    [relatedSearchResults1?.data?.items]
+  );
+  const relatedMovies2 = useMemo(
+    () => relatedSearchResults2?.data?.items?.map(formatMovieUrl) || [],
+    [relatedSearchResults2?.data?.items]
+  );
+  const relatedMovies3 = useMemo(
+    () => relatedSearchResults3?.data?.items?.map(formatMovieUrl) || [],
+    [relatedSearchResults3?.data?.items]
+  );
+
+  const scoreMovieByIntent = useCallback(
+    (movie: any) => {
+      const normalize = (value: string) =>
+        value
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .trim();
+
+      const title = String(movie?.name || '');
+      const origin = String(movie?.origin_name || '');
+      const content = String(movie?.content || '');
+      const categories = Array.isArray(movie?.category)
+        ? movie.category.map((item: any) => String(item?.name || '')).join(' ')
+        : '';
+
+      const fullText = normalize([title, origin, content, categories].join(' '));
+
+      const queryTokens = normalize(effectiveKeyword || baseKeyword)
+        .split(/\s+/)
+        .filter((item) => item.length > 1);
+
+      const mustHaveTokens = (aiSignalData?.mustHave || [])
+        .map((item) => normalize(item))
+        .filter(Boolean);
+
+      const toneTokens = (aiSignalData?.tones || [])
+        .map((item) => normalize(item))
+        .filter(Boolean);
+
+      const exclusionTokens = (aiSignalData?.exclusions || [])
+        .map((item) => normalize(item))
+        .filter(Boolean);
+
+      let score = 0;
+
+      queryTokens.forEach((token) => {
+        if (fullText.includes(token)) {
+          score += 9;
+        }
+      });
+
+      mustHaveTokens.forEach((token) => {
+        if (fullText.includes(token)) {
+          score += 13;
+        }
+      });
+
+      toneTokens.forEach((token) => {
+        if (fullText.includes(token)) {
+          score += 8;
+        }
+      });
+
+      exclusionTokens.forEach((token) => {
+        if (fullText.includes(token)) {
+          score -= 12;
+        }
+      });
+
+      const yearHint = String(aiSignalData?.yearHint || '').trim();
+      if (yearHint && String(movie?.year || '') === yearHint) {
+        score += 10;
+      }
+
+      const watchlistHit = watchlist.some((item) =>
+        normalize(String(item?.name || '')).includes(normalize(title))
+      );
+      if (watchlistHit) {
+        score += 7;
+      }
+
+      return score;
+    },
+    [aiSignalData?.exclusions, aiSignalData?.mustHave, aiSignalData?.tones, aiSignalData?.yearHint, baseKeyword, effectiveKeyword, watchlist]
+  );
 
   const aiCandidateMovies = useMemo(() => {
     if (!isAIMode) {
       return baseResultMovies;
     }
 
-    const merged = [...baseResultMovies, ...relatedMovies1, ...relatedMovies2];
+    const merged = [
+      ...baseResultMovies,
+      ...relatedMovies1,
+      ...relatedMovies2,
+      ...relatedMovies3,
+    ];
     const mapByKey = new Map<string, any>();
 
     merged.forEach((movie: any) => {
@@ -331,8 +456,18 @@ export const SearchPage: React.FC = () => {
       }
     });
 
-    return Array.from(mapByKey.values());
-  }, [baseResultMovies, isAIMode, relatedMovies1, relatedMovies2]);
+    return Array.from(mapByKey.values())
+      .map((movie: any) => ({ movie, score: scoreMovieByIntent(movie) }))
+      .sort((a, b) => b.score - a.score)
+      .map((item) => item.movie);
+  }, [
+    baseResultMovies,
+    isAIMode,
+    relatedMovies1,
+    relatedMovies2,
+    relatedMovies3,
+    scoreMovieByIntent,
+  ]);
 
   const { data: suggestionSearchResults, isFetching: isLoadingSuggestionPool } =
     useSearchMovies(
@@ -355,8 +490,10 @@ export const SearchPage: React.FC = () => {
       }
     );
 
-  const suggestionPoolMovies =
-    suggestionSearchResults?.data?.items?.map(formatMovieUrl) || [];
+  const suggestionPoolMovies = useMemo(
+    () => suggestionSearchResults?.data?.items?.map(formatMovieUrl) || [],
+    [suggestionSearchResults?.data?.items]
+  );
 
   const rerankPayload = useMemo(
     () => ({
@@ -700,7 +837,7 @@ export const SearchPage: React.FC = () => {
 
   const aiSuggestions = useMemo(() => {
     if (!isAIMode || effectiveKeyword.length < 2) {
-      return [] as Array<{ label: string; query: string; slug: string }>;
+      return [] as { label: string; query: string; slug: string }[];
     }
 
     const normalize = (value: string) =>
@@ -784,12 +921,12 @@ export const SearchPage: React.FC = () => {
       })
       .filter(Boolean)
       .sort((a: any, b: any) => b.score - a.score)
-      .slice(0, 6) as Array<{
+      .slice(0, 6) as {
       score: number;
       label: string;
       query: string;
       slug: string;
-    }>;
+    }[];
 
     const unique = new Set<string>();
     return scored.filter((item) => {
@@ -814,9 +951,11 @@ export const SearchPage: React.FC = () => {
     (
       isRewriting ||
       isInferringSemantic ||
+      isInferringSignals ||
       isLoadingSuggestionPool ||
       isLoadingRelated1 ||
       isLoadingRelated2 ||
+      isLoadingRelated3 ||
       isLoadingFallback1 ||
       isLoadingFallback2
     );
@@ -957,6 +1096,22 @@ export const SearchPage: React.FC = () => {
           </View>
         ) : null}
 
+        {isAIMode && aiSignalData?.intentSummary ? (
+          <View style={styles.aiHintWrap}>
+            <Text style={styles.aiHintLabel}>AI Intent</Text>
+            <Text style={styles.aiHintText}>{aiSignalData.intentSummary}</Text>
+          </View>
+        ) : null}
+
+        {isAIMode && (aiSignalData?.mustHave?.length || 0) > 0 ? (
+          <View style={styles.aiHintWrap}>
+            <Text style={styles.aiHintLabel}>AI Signals</Text>
+            <Text style={styles.aiHintText}>
+              {(aiSignalData?.mustHave || []).slice(0, 5).join(' • ')}
+            </Text>
+          </View>
+        ) : null}
+
         {isAIMode && relatedQueries.length > 0 ? (
           <View style={styles.aiHintWrap}>
             <Text style={styles.aiHintLabel}>AI Related Queries</Text>
@@ -969,7 +1124,7 @@ export const SearchPage: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeContainer} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.safeContainer} edges={['top', 'bottom', 'left', 'right']}>
       <View style={styles.customHeader}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={20} color="#fff" />
@@ -1162,7 +1317,7 @@ export const SearchPage: React.FC = () => {
         </View>
       )}
 
-      {(isLoading || (isAIMode && (isLoadingRelated1 || isLoadingRelated2))) &&
+      {(isLoading || (isAIMode && (isLoadingRelated1 || isLoadingRelated2 || isLoadingRelated3))) &&
       hasSearchCriteria ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4A90E2" />

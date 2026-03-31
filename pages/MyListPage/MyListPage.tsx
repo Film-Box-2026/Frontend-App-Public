@@ -342,7 +342,7 @@ export const MyListPage: React.FC = () => {
 
   if (watchlist.length === 0) {
     return (
-      <SafeAreaView style={styles.safeContainer} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView style={styles.safeContainer} edges={['top', 'bottom', 'left', 'right']}>
         <View style={styles.container}>
           <Header title="My List" />
           <View style={styles.content}>
@@ -366,7 +366,7 @@ export const MyListPage: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.safeContainer} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.safeContainer} edges={['top', 'bottom', 'left', 'right']}>
       <View style={styles.container}>
         <Header title="My List" />
         <View style={styles.content}>

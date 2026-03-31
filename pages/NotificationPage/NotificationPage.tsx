@@ -11,6 +11,7 @@ import {
     ActivityIndicator,
     FlatList,
     Image,
+    Keyboard,
     Pressable,
     StyleSheet,
     Text,
@@ -139,12 +140,17 @@ export const NotificationPage: React.FC = () => {
 
   
   const styles = StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colorScheme === 'dark' ? '#0B0B0E' : colors.background,
+    },
     container: {
       flex: 1,
       backgroundColor: colorScheme === 'dark' ? '#0B0B0E' : colors.background,
       paddingHorizontal: 14,
     },
     header: {
+      marginTop: 4,
       marginBottom: 10,
     },
     clearButton: {
@@ -157,7 +163,7 @@ export const NotificationPage: React.FC = () => {
         colorScheme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
     },
     clearText: {
-      fontSize: 15,
+      fontSize: 14,
       color: colorScheme === 'dark' ? '#ECEDEE' : colors.text,
       fontWeight: '600',
     },
@@ -177,7 +183,7 @@ export const NotificationPage: React.FC = () => {
       borderBottomColor: '#FFFFFF',
     },
     tabText: {
-      fontSize: 24,
+      fontSize: 18,
       color: colorScheme === 'dark' ? '#DADCE2' : colors.tabIconDefault,
       fontWeight: '700',
     },
@@ -221,14 +227,14 @@ export const NotificationPage: React.FC = () => {
       gap: 4,
     },
     cardTitle: {
-      fontSize: 24,
+      fontSize: 18,
       fontWeight: '700',
-      lineHeight: 27,
+      lineHeight: 22,
       color: colorScheme === 'dark' ? '#FFFFFF' : colors.text,
     },
     cardDescription: {
-      fontSize: 16,
-      lineHeight: 20,
+      fontSize: 14,
+      lineHeight: 18,
       color: colorScheme === 'dark' ? '#D3D7E0' : colors.tabIconDefault,
     },
     dot: {
@@ -270,7 +276,9 @@ export const NotificationPage: React.FC = () => {
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <View style={styles.screen}>
+      <SafeAreaView style={{ backgroundColor: colorScheme === 'dark' ? '#0B0B0E' : colors.background }} edges={['top']} />
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <View style={styles.header}>
         <Header
           title={`Notifications (${totalCount})`}
@@ -309,6 +317,7 @@ export const NotificationPage: React.FC = () => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={Keyboard.dismiss}
         renderItem={({ item }) => (
           <Pressable
             style={styles.card}
@@ -346,7 +355,8 @@ export const NotificationPage: React.FC = () => {
           )
         }
       />
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
