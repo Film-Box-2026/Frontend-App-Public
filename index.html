@@ -1,0 +1,130 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<style>
+  table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+  th, td { border: 1px solid #000000; padding: 10px; text-align: left; vertical-align: top; }
+  th { background-color: #f2f2f2; font-weight: bold; }
+  ul { margin-top: 0; padding-left: 20px; }
+  h2 { font-family: Arial, sans-serif; text-align: center; }
+</style>
+</head>
+<body>
+  <h2> BẢNG PHÂN CÔNG NHIỆM VỤ THUYẾT TRÌNH ĐỒ ÁN REACT NATIVE (APP FILMBOX) </h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 15%">Thành Viên</th>
+        <th style="width: 25%">Trang / Logic Phụ Trách</th>
+        <th style="width: 45%">Điểm Nhấn Kỹ Thuật Báo Cáo (React Native)</th>
+        <th style="width: 15%">Người Nhận</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Người 1</b><br>(Kiến trúc & Routing)</td>
+        <td>
+          <ul>
+            <li>app/_layout.tsx</li>
+            <li>HomePage</li>
+            <li>app/(tabs)/index.tsx</li>
+            <li>components/</li>
+          </ul>
+        </td>
+        <td>
+          <ul>
+            <li>Quản lý Routing và phân luồng tự động bằng <b>Expo Router</b>.</li>
+            <li>Kiến trúc Tab/Stack Navigation kết hợp trên Mobile.</li>
+            <li>Dựng Layout Component gốc bằng Flexbox.</li>
+            <li>Tạo Slider vuốt chạm bằng <code>reanimated-carousel</code>.</li>
+          </ul>
+        </td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><b>Người 2</b><br>(UI Danh sách & Hiệu năng)</td>
+        <td>
+          <ul>
+            <li>CinemaPage</li>
+            <li>TVShowsPage</li>
+            <li>AnimeListPage</li>
+            <li>CartoonPage</li>
+            <li>SeriesPage</li>
+          </ul>
+        </td>
+        <td>
+          <ul>
+            <li>Khác biệt bài toán hiệu năng: DOM Web vs Native UI.</li>
+            <li>Tối ưu RAM và màn hình siêu mượt với <b><code>FlatList</code></b>.</li>
+            <li>Sự kiện vuốt từ mép để làm mới <code>RefreshControl</code>.</li>
+            <li>Sự kiện tự động tải trang qua Pagination <code>onEndReached</code>.</li>
+          </ul>
+        </td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><b>Người 3 ⭐</b><br>(Trải nghiệm & Media)</td>
+        <td>
+          <ul>
+            <li>DetailMoviePage</li>
+            <li>SearchPage</li>
+            <li>hooks/useResumeMovie.ts</li>
+            <li>store/resumeSlice.ts</li>
+          </ul>
+        </td>
+        <td>
+          <ul>
+            <li><b>Lưu tiến trình Video (Resume Movie):</b> Lưu bằng Redux, xem tiếp phim dở.</li>
+            <li>Xử lý Player mượt mà bằng trình duyệt nhúng <b><code>WebView</code></b>.</li>
+            <li>Parse HTML Content sang thẻ của Mobile với <code>render-html</code>.</li>
+            <li>Caching kết quả API tìm kiếm với mô hình <b>React Query</b>.</li>
+          </ul>
+        </td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><b>Người 4</b><br>(Xác thực & Bảo mật Form)</td>
+        <td>
+          <ul>
+            <li>LoginPage</li>
+            <li>SignupPage</li>
+            <li>VerifyEmailPage</li>
+            <li>ProfilePage</li>
+            <li>EditAccountPage</li>
+          </ul>
+        </td>
+        <td>
+          <ul>
+            <li>Xử lý sự cố "Bàn phím ảo lấp màn hình" với <code>KeyboardAvoidingView</code>.</li>
+            <li>Bảo vệ luồng <b>Protected Routes</b> (cấm tab khi chưa có quyền).</li>
+            <li>Cơ chế lưu trữ Token Offline bảo mật bằng <b><code>AsyncStorage</code></b>.</li>
+            <li>Lan tỏa Global State của User qua mọi File bằng <b>Redux Toolkit</b>.</li>
+          </ul>
+        </td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><b>Người 5</b><br>(Tái sử dụng Component & Utilities)</td>
+        <td>
+          <ul>
+            <li>PaymentPage</li>
+            <li>SubscriptionScreen</li>
+            <li>NotificationPage</li>
+            <li>utils/subscriptionUtils.ts</li>
+            <li>(Và các trang lọc Quốc gia/Thể loại)</li>
+          </ul>
+        </td>
+        <td>
+          <ul>
+            <li>Thiết kế Component tái sử dụng linh hoạt dựa trên đa cấu hình Parameter.</li>
+            <li>Thiết kế Helper Functions (<code>subscriptionUtils</code>) độc lập.</li>
+            <li>Tích hợp UI Native: Thẻ màu, Haptic Feedback (rung phản hồi).</li>
+            <li>Tích hợp các Services Thanh toán thứ ba vào App thay thế Web.</li>
+          </ul>
+        </td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>

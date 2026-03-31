@@ -100,6 +100,10 @@ export const TVShowsPage: React.FC = () => {
         renderItem={({ item }) => <CartoonMovieCard movie={item} />}
         keyExtractor={(item, index) => `${item._id}-${index}`}
         numColumns={2}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews={true}
         columnWrapperStyle={{ justifyContent: 'space-around' }}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
